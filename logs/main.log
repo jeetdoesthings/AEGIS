@@ -1,0 +1,15 @@
+done finetune
+done ewc
+done replay
+done lora
+done gate:conflict:1.0
+done gate:magnitude:1.0
+
+method                           ACC           BWT           FWT           NEW
+finetune                  90.8+- 2.4    -7.7+- 2.9     0.5+- 3.0    97.0+- 0.0
+ewc                        9.8+- 0.0   -21.5+- 0.1    -0.7+- 2.0    27.0+- 0.0
+replay                    95.2+- 0.2    -2.2+- 0.3     0.7+- 2.7    96.9+- 0.1
+lora                      93.8+- 0.2     0.0+- 0.0     0.9+- 1.0    93.8+- 0.2
+gate:conflict:1.0         13.7+- 3.0   -56.9+- 2.4     0.2+- 2.2    59.2+- 4.2
+gate:magnitude:1.0        92.3+- 0.6    -3.7+- 0.6     1.0+- 3.0    95.2+- 0.1
+saved results.json and forgetting_curve.png

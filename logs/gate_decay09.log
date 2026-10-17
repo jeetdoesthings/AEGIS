@@ -1,0 +1,7 @@
+done gate:conflict:1.0
+done gate:magnitude:1.0
+
+method                           ACC           BWT           FWT           NEW
+gate:conflict:1.0         17.5+- 2.4   -57.1+- 1.5     0.2+- 2.3    63.2+- 1.3
+gate:magnitude:1.0        92.3+- 0.6    -3.7+- 0.6     1.0+- 3.0    95.2+- 0.1
+saved results.json and forgetting_curve.png

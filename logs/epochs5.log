@@ -1,0 +1,9 @@
+done finetune
+done ewc
+done gate:conflict:1.0
+
+method                           ACC           BWT           FWT           NEW
+finetune                  89.8+- 2.1    -9.6+- 2.6     0.3+- 2.9    97.5+- 0.0
+ewc                        9.8+- 0.0   -21.8+- 0.0    -0.7+- 2.1    27.2+- 0.0
+gate:conflict:1.0         13.0+- 0.4   -48.1+- 4.6     0.1+- 1.4    51.5+- 3.6
+saved results.json and forgetting_curve.png
