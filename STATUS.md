@@ -13,3 +13,10 @@
 - key numbers: Smoke test user time: 15.87s. Smoke test table: finetune ACC 88.0%, replay ACC 92.9%, lora ACC 90.1%, gate:mag ACC 89.7%, gate:conf ACC 32.4%, ewc ACC 9.8% (diverged).
 - problems / decisions: cl.py is untouched. All Phase 1+ code will be developed in cl2.py.
 - next: Task 1.1
+
+## Task 1.1 Validation split and seed control
+- status: done
+- what changed: Modified cl2.py to split MNIST train into 55,000 train / 5,000 validation using fixed generator seed 42. Added `--eval_split val|test`, `--seed_start N`, and `--out TAG`. Implemented configuration JSON logging (all args, git commit, torch version, device, seeds).
+- key numbers: Evaluation on `--eval_split val` yielded ACC=87.2% vs `--eval_split test` ACC=87.5% (from outputs/phase1/results_test_val.json and outputs/phase1/results_test_test.json).
+- problems / decisions: Training data strictly isolated to 55,000 samples for all runs, guaranteeing validation split is never seen during training.
+- next: Task 1.2

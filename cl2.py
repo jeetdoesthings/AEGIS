@@ -4,12 +4,19 @@ Benchmark: Permuted-MNIST (domain-incremental), MLP, plain SGD.
 Methods:  finetune | ewc | replay | lora | gate[:mode[:beta]]
           gate modes: conflict (ours), magnitude (ablation), layer_cos (variant)
 """
-import argparse, json, random
+import argparse, json, os, random, subprocess
 import numpy as np
 import torch, torch.nn as nn, torch.nn.functional as F
 from torchvision import datasets
 
 dev = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def get_git_commit():
+    try:
+        return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
+    except Exception:
+        return "unknown"
 
 
 def set_seed(s):
@@ -18,11 +25,23 @@ def set_seed(s):
 
 
 # ---------------------------------------------------------------- data
-def load_mnist():
+def load_mnist(eval_split="test", val_seed=42):
     tr = datasets.MNIST("data", train=True, download=True)
     te = datasets.MNIST("data", train=False, download=True)
     f = lambda d: ((d.data.float() / 255 - 0.1307) / 0.3081).view(len(d.data), -1)
-    return f(tr).to(dev), tr.targets.to(dev), f(te).to(dev), te.targets.to(dev)
+    X_all, y_all = f(tr).to(dev), tr.targets.to(dev)
+    X_test, y_test = f(te).to(dev), te.targets.to(dev)
+
+    # Fixed 55,000 train / 5,000 val split
+    g = torch.Generator().manual_seed(val_seed)
+    perm = torch.randperm(len(X_all), generator=g)
+    tr_idx, val_idx = perm[:55000], perm[55000:]
+    X_train, y_train = X_all[tr_idx], y_all[tr_idx]
+    X_val, y_val = X_all[val_idx], y_all[val_idx]
+
+    if eval_split == "val":
+        return X_train, y_train, X_val, y_val
+    return X_train, y_train, X_test, y_test
 
 
 def make_perms(n_tasks, seed):
@@ -213,16 +232,20 @@ def main():
     ap.add_argument("--lr", type=float, default=0.05)
     ap.add_argument("--bs", type=int, default=128)
     ap.add_argument("--seeds", type=int, default=3)
+    ap.add_argument("--seed_start", type=int, default=0)
+    ap.add_argument("--eval_split", choices=["val", "test"], default="test")
+    ap.add_argument("--out", type=str, default="")
     ap.add_argument("--ewc_lambda", type=float, default=5000)
     ap.add_argument("--buf", type=int, default=200)
     ap.add_argument("--beta", type=float, default=1.0)
     ap.add_argument("--decay", type=float, default=1.0)
     args = ap.parse_args()
 
-    data = load_mnist()
+    data = load_mnist(eval_split=args.eval_split)
+    seeds = list(range(args.seed_start, args.seed_start + args.seeds))
     results = {}
     for m in args.methods:
-        results[m] = [run(m, args, s, data) for s in range(args.seeds)]
+        results[m] = [run(m, args, s, data) for s in seeds]
         print(f"done {m}", flush=True)
 
     print(f"\n{'method':<22}{'ACC':>14}{'BWT':>14}{'FWT':>14}{'NEW':>14}")
@@ -233,7 +256,34 @@ def main():
             cells.append(f"{v.mean():6.1f}+-{v.std():4.1f}")
         print(f"{m:<22}" + "".join(f"{c:>14}" for c in cells))
 
-    json.dump(results, open("results.json", "w"))
+    # Path handling for outputs and configs
+    if args.out:
+        if os.path.dirname(args.out):
+            out_dir = f"outputs/{os.path.dirname(args.out)}"
+            base_name = os.path.basename(args.out)
+        else:
+            out_dir = "outputs"
+            base_name = args.out
+        os.makedirs(out_dir, exist_ok=True)
+        results_path = os.path.join(out_dir, f"results_{base_name}.json")
+        config_path = os.path.join(out_dir, f"config_{base_name}.json")
+        curve_path = os.path.join(out_dir, f"forgetting_curve_{base_name}.png")
+    else:
+        results_path = "results.json"
+        config_path = "config.json"
+        curve_path = "forgetting_curve.png"
+
+    config_data = vars(args).copy()
+    config_data["git_commit"] = get_git_commit()
+    config_data["torch_version"] = torch.__version__
+    config_data["device"] = dev
+    config_data["seeds_evaluated"] = seeds
+
+    with open(config_path, "w") as f:
+        json.dump(config_data, f, indent=2)
+
+    with open(results_path, "w") as f:
+        json.dump(results, f, indent=2)
 
     import matplotlib
     matplotlib.use("Agg")
@@ -248,8 +298,9 @@ def main():
     plt.legend(fontsize=7)
     plt.grid(alpha=0.3)
     plt.tight_layout()
-    plt.savefig("forgetting_curve.png", dpi=200)
-    print("saved results.json and forgetting_curve.png")
+    plt.savefig(curve_path, dpi=200)
+    plt.close()
+    print(f"saved {results_path}, {config_path}, and {curve_path}")
 
 
 if __name__ == "__main__":
