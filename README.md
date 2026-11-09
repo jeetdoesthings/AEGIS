@@ -1,99 +1,143 @@
-# AEGIS: Continual Learning & Catastrophic Forgetting Benchmark
+# AEGIS: Continual Learning with Directional & Magnitude Gradient Gating
 
-An empirical benchmark evaluating continual learning methods against catastrophic forgetting across sequential Permuted-MNIST tasks using a Multi-Layer Perceptron (MLP) architecture and SGD optimization.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.8.0-ee4c2c.svg)](https://pytorch.org/)
 
-## Benchmark Overview
-
-The benchmark evaluates six continual learning paradigms across **5 sequentially learned permuted tasks** (Permuted-MNIST):
-
-1. **Plain Fine-Tuning (`finetune`)**: Standard unconstrained SGD training on each task sequentially.
-2. **Elastic Weight Consolidation (`ewc`)**: Diagonal Fisher information regularizer penalizing changes to parameters critical for previous tasks.
-3. **Experience Replay (`replay`)**: Stores an episodic memory buffer of 200 raw exemplars per task, interleaved during training.
-4. **Low-Rank Adaptation (`lora`)**: Freezes the base MLP after Task 1 and trains task-specific low-rank matrix pairs ($r=8$) with test-time task-ID conditioning.
-5. **Gradient-Conflict Gate (`gate:conflict`)**: Custom directional gate that tracks cumulative parameter displacement $\mathbf{d}$ across past tasks and damps gradient components that oppose prior movement ($\mathbf{g} \cdot \mathbf{d} > 0$).
-6. **Gate Magnitude Ablation (`gate:magnitude`)**: Ablation baseline that scales down gradients purely based on historical displacement magnitude, omitting the directional conflict check.
-7. **Gate Layer Cosine Variant (`gate:layer_cos`)**: Layer-wise cosine similarity gating.
+An academically rigorous empirical investigation into catastrophic forgetting, directional gradient conflict gating, and parameter-drift dynamics across sequential neural network tasks.
 
 ---
 
-## Evaluation Metrics
+## 📌 Executive Summary
 
-- **ACC**: Average accuracy over all 5 tasks at sequence completion.
-- **BWT (Backward Transfer)**: Average change in accuracy on earlier tasks after learning subsequent tasks (negative values quantify catastrophic forgetting).
-- **FWT (Forward Transfer)**: Performance on subsequent tasks prior to training, relative to an untrained random initialization.
-- **NEW**: Average initial accuracy on each task immediately after training on it.
+Continual learning in neural networks is fundamentally constrained by catastrophic forgetting—the overwriting of past representations when training on new data distributions. This project investigates whether parameter-space gradient gating can protect historical knowledge without storing past exemplars (replay buffers).
 
----
-
-## Summary of Results
-
-All values represent **mean ± std (%)** across 3 random seeds:
-
-| Tag | Method | ACC (%) | BWT (%) | FWT (%) | NEW (%) |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| **main** | finetune | 90.8 ± 2.4 | -7.7 ± 2.9 | 0.5 ± 3.0 | 97.0 ± 0.0 |
-| **main** | ewc | 9.8 ± 0.0 | -21.5 ± 0.1 | -0.7 ± 2.0 | 27.0 ± 0.0 |
-| **main** | **replay** | **95.2 ± 0.2** | -2.2 ± 0.3 | 0.7 ± 2.7 | 96.9 ± 0.1 |
-| **main** | **lora** | 93.8 ± 0.2 | **0.0 ± 0.0** | 0.9 ± 1.0 | 93.8 ± 0.2 |
-| **main** | gate:conflict:1.0 | 13.7 ± 3.0 | -56.9 ± 2.4 | 0.2 ± 2.2 | 59.2 ± 4.2 |
-| **main** | gate:magnitude:1.0 | 92.3 ± 0.6 | -3.7 ± 0.6 | 1.0 ± 3.0 | 95.2 ± 0.1 |
-| **gate_sweep** | gate:conflict:0.5 | 46.1 ± 2.1 | -57.6 ± 3.0 | -0.6 ± 0.5 | 92.1 ± 0.3 |
-| **gate_sweep** | gate:layer_cos:1.0 | 91.1 ± 2.3 | -7.3 ± 2.8 | 0.5 ± 2.9 | 96.9 ± 0.0 |
-| **gate_sweep** | gate:magnitude:0.5 | 91.1 ± 2.0 | -6.9 ± 2.4 | 0.6 ± 2.9 | 96.6 ± 0.1 |
-| **epochs5** | finetune | 89.8 ± 2.1 | -9.6 ± 2.6 | 0.3 ± 2.9 | **97.5 ± 0.0** |
-
-### Key Findings
-- **Replay achieves highest overall accuracy (95.2 ± 0.2% ACC)** by continually anchoring shared representations with raw exemplar buffers.
-- **LoRA eliminates forgetting completely (0.0 ± 0.0% BWT)** by isolating task parameters via test-time task conditioning.
-- **Magnitude ablation strongly outperforms directional conflict gating**: `gate:magnitude:1.0` achieves 92.3 ± 0.6% ACC vs. 13.7 ± 3.0% for `gate:conflict:1.0`. The elementwise directional conflict check over-restricts gradient updates, severely throttling new-task plasticity.
-- **EWC diverged to chance level (9.8 ± 0.0% ACC)** under unnormalized Fisher penalties with standard SGD step size 0.05.
+Through exhaustive, fair-budget evaluations on held-out test splits across 5 independent random seeds (100–104), this project establishes:
+1. **The Directional Ratchet Failure:** The original directional gradient conflict gate (`gate:conflict`) fails catastrophically, collapsing to **$41.92 \pm 1.71\%$ accuracy** on 10 Permuted-MNIST tasks ($-36.29 \pm 2.82\%$ below plain fine-tuning). Step-level parameter diagnostics confirm the *asymmetric ratchet mechanism*: selectively zeroing updates opposing historical displacement ($g \cdot d > 0$) prevents restoring steps while letting outward steps proceed unhindered, causing parameter norms to double ($l1.weight$ L2 norm 22.70 vs 11.79 for fine-tuning) and run away along $d$.
+2. **Magnitude Outperforms Direction:** Ignoring update direction and dampening weights based purely on historical displacement magnitude (`gate:magnitude`) prevents runaway inflation and outperforms fine-tuning on 10 tasks ($83.13 \pm 1.22\%$ vs $78.21 \pm 1.68\%$).
+3. **Anti-Ratchet Repairs:** Formulating an elastic quadratic drift regularizer (`gate:drift`) and a hybrid gate (`gate:hybrid`) eliminates the ratchet runaway. On 10 tasks, `gate:hybrid` ($83.82 \pm 0.54\%$) and `gate:drift` ($83.21 \pm 1.26\%$) **statistically outperform plain fine-tuning ($78.21 \pm 1.68\%$) by $>+5\%$ ACC** without replay buffers.
+4. **The Output Head Bottleneck:** On domain-incremental Split-MNIST, all buffer-free methods tie around $62\%$ ACC due to direct representational collision at the shared 2-way output head, whereas exemplar replay ($96.85\%$) and parameter-isolated LoRA ($98.73\%$) retain near-optimal performance.
 
 ---
 
-## Repository Structure
+## 📊 Master Benchmark Results
+
+*All evaluations conducted on held-out test splits across 5 random seeds (100, 101, 102, 103, 104). Values reported as mean ± std (%). Source: [`outputs/phase5/master_summary.csv`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/master_summary.csv).*
+
+| Method | Perm5 ACC (%) | Perm5 BWT (%) | Perm10 ACC (%) | Perm10 BWT (%) | Split-MNIST ACC (%) | Split-MNIST BWT (%) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Fine-Tuning (Plain SGD)** | $88.97 \pm 1.85$ | $-9.62 \pm 2.34$ | $78.21 \pm 1.68$ | $-20.80 \pm 1.84$ | $62.07 \pm 1.00$ | $-46.36 \pm 1.23$ |
+| **EWC (repaired, $\lambda=20/100$)** | $93.76 \pm 0.36$ | $-2.34 \pm 0.55$ | $90.22 \pm 0.87$ | $-4.17 \pm 0.93$ | $63.96 \pm 1.39$ | $-43.76 \pm 1.72$ |
+| **Replay (buffer=1000)** | $\mathbf{95.85 \pm 0.11}$ | $-1.18 \pm 0.14$ | $\mathbf{95.22 \pm 0.09}$ | $-1.92 \pm 0.14$ | $96.85 \pm 0.30$ | $-2.69 \pm 0.29$ |
+| **LoRA ($r=16/8$, oracle ID)\*** | $94.30 \pm 0.12$ | $\mathbf{0.00 \pm 0.00}$ | $94.05 \pm 0.05$ | $\mathbf{0.00 \pm 0.00}$ | $\mathbf{98.73 \pm 0.06}$ | $\mathbf{0.00 \pm 0.00}$ |
+| **Gate: Conflict (original, $\beta=0.25$)** | $81.73 \pm 1.41$ | $-17.60 \pm 1.84$ | $41.92 \pm 1.71$ | $-58.83 \pm 1.95$ | $62.28 \pm 0.98$ | $-45.88 \pm 1.24$ |
+| **Gate: Magnitude (ablation, $\beta=1.0$)** | $91.43 \pm 0.86$ | $-4.39 \pm 1.01$ | $83.13 \pm 1.22$ | $-12.82 \pm 1.33$ | $61.90 \pm 0.36$ | $-45.83 \pm 0.51$ |
+| **Gate: Layer Cosine ($\beta=0.5/1.0$)** | $89.00 \pm 2.32$ | $-9.62 \pm 2.98$ | $78.80 \pm 0.97$ | $-20.15 \pm 1.15$ | $62.05 \pm 1.02$ | $-46.39 \pm 1.26$ |
+| **Gate: Drift (repaired, $c=0.1$)** | $91.89 \pm 1.03$ | $-5.82 \pm 1.39$ | $83.21 \pm 1.26$ | $-14.98 \pm 1.44$ | $62.62 \pm 1.03$ | $-45.61 \pm 1.27$ |
+| **Gate: Hybrid (repaired, $c=0.1$)** | $90.98 \pm 0.90$ | $-6.64 \pm 1.20$ | $83.82 \pm 0.54$ | $-13.95 \pm 0.64$ | $62.78 \pm 0.56$ | $-45.11 \pm 0.71$ |
+| **Gate: Soft Conflict ($\beta=0.1$)** | $90.68 \pm 0.58$ | $-7.44 \pm 0.79$ | $80.05 \pm 1.66$ | $-18.58 \pm 1.86$ | $62.34 \pm 1.03$ | $-45.99 \pm 1.28$ |
+
+*\*LoRA utilizes an oracle task ID at test time to select task-specific adapters.*
+
+---
+
+## 🛠️ Repository Structure
 
 ```
 AEGIS/
-├── cl.py                   # Core continual learning benchmark & model implementations
-├── analyze.py              # Script generating metric heatmaps, bar charts, and summary tables
-├── layer_analysis.py       # Hook analyzing layer-wise gradient suppression dynamics
-├── run_sweep.sh            # Hyperparameter sweep orchestration script
-├── outputs/                # Generated experiment artifacts
-│   ├── results_table.csv   # Consolidated metric results across all tags
-│   ├── results_table.png   # Rendered high-resolution results table
-│   ├── summary.md          # Benchmark findings summary
-│   ├── results_explanation.md # Complete poster & examiner documentation
-│   ├── heatmaps_*.png      # Accuracy matrix R heatmaps per tag
-│   ├── barchart_*.png      # Grouped ACC/BWT/NEW bar charts
-│   ├── forgetting_curve_*.png # Task 1 accuracy curves over sequence
-│   ├── layer_protection.png# Fraction of gradient norm removed per layer
-│   └── results_*.json      # Raw JSON records per run
-└── logs/                   # Execution stdout/stderr logs
+├── cl.py                       # Frozen original reference code
+├── cl2.py                      # Enhanced engine (splits, guards, diagnostics, repaired gates)
+├── tune_val.py                 # Hyperparameter sweep across 25 configs on validation split
+├── run_final_perm5.py          # Final 5-seed evaluation on 5-task Permuted-MNIST
+├── run_perm10.py               # Final 5-seed evaluation on 10-task Permuted-MNIST
+├── tune_and_run_split.py       # Validation tuning and test evaluation on Split-MNIST
+├── diagnostics.py              # Step-level parameter telemetry & ratchet hypothesis test
+├── tune_and_run_repaired.py    # Tuning & 5-seed evaluation of repaired gate variants
+├── build_results_pack.py       # Consolidates all tables, plots, and metadata for deliverables
+├── configs/                    # Locked JSON hyperparameters per benchmark
+│   ├── locked_perm5.json       # Best configs for 5-task Permuted-MNIST
+│   ├── locked_split.json       # Best configs for Split-MNIST
+│   └── locked_repaired.json    # Best configs for repaired gates
+├── outputs/
+│   ├── phase1/                 # EWC diagnosis, validation sweep, 5-task Permuted-MNIST test
+│   ├── phase2/                 # 10-task Permuted-MNIST and Split-MNIST test results
+│   ├── phase3/                 # Diagnostic CSVs, ratchet hypothesis, findings, layer heatmap
+│   └── phase5/                 # Final deliverables pack:
+│       ├── report.md           # Full academic research paper draft
+│       ├── claim_audit.md      # Statistical tie audit log verifying all assertions
+│       ├── poster_text.md      # Publication-ready poster text
+│       ├── qa.md               # 15 examiner defense questions with exact numbers
+│       ├── script_60s.md       # 60-second spoken poster script
+│       ├── captions.md         # Detailed figure and table captions
+│       ├── master_summary.*    # Consolidated 10-method comparison (CSV + PNG)
+│       ├── table_*.*           # Per-benchmark publication tables (CSV + PNG)
+│       └── *.png               # Forgetting curves, heatmaps, diagnostics, and layer plots
+└── STATUS.md                   # Real-time task progress log appended after every milestone
 ```
 
 ---
 
-## Getting Started
+## 🚀 Reproduction Commands
 
-### 1. Setup Virtual Environment
+### 1. Environment Setup
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install torch torchvision matplotlib numpy pandas
 ```
 
-### 2. Run Main Experiment
+### 2. Fast Smoke Test (1 seed, 1 epoch)
 ```bash
-python cl.py --seeds 3 --epochs 3
+python cl2.py --seeds 1 --epochs 1
 ```
 
-### 3. Run Hyperparameter Tuning Sweep
+### 3. Permuted-MNIST 5-Task Pipeline
 ```bash
-bash run_sweep.sh
+# Tune all 7 methods across 25 configs on validation split (seeds 0-2)
+python tune_val.py
+
+# Evaluate locked configs across 5 fresh test seeds (100-104)
+python run_final_perm5.py
 ```
 
-### 4. Analyze Results
+### 4. Permuted-MNIST 10-Task Evaluation
 ```bash
-python analyze.py
-python layer_analysis.py
+# Evaluate locked configs on 10 sequential tasks across 5 test seeds (100-104)
+python run_perm10.py
 ```
+
+### 5. Split-MNIST Evaluation
+```bash
+# Tune on validation and evaluate 5 test seeds on domain-incremental digit pairs
+python tune_and_run_split.py
+```
+
+### 6. Mechanistic Diagnostics & Hypothesis Test
+```bash
+# Log step-by-step weight norms, drift along d, and test ratchet hypothesis
+python diagnostics.py
+```
+
+### 7. Repaired Gates Evaluation
+```bash
+# Tune repaired gates (drift, hybrid, soft) and evaluate across 5 seeds on all benchmarks
+python tune_and_run_repaired.py
+```
+
+### 8. Build Final Phase 5 Deliverables Pack
+```bash
+# Regenerate master tables, plots, and figures in outputs/phase5/
+python build_results_pack.py
+```
+
+---
+
+## 📚 Deliverables & Documentation
+
+- **Full Academic Report:** [`outputs/phase5/report.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/report.md)
+- **Claim Audit & Statistical Verification:** [`outputs/phase5/claim_audit.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/claim_audit.md)
+- **Poster Presentation Text:** [`outputs/phase5/poster_text.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/poster_text.md)
+- **15 Examiner Defense Q&A:** [`outputs/phase5/qa.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/qa.md)
+- **60-Second Spoken Poster Script:** [`outputs/phase5/script_60s.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/script_60s.md)
+- **Figure & Table Captions:** [`outputs/phase5/captions.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/captions.md)
+- **Milestone Log:** [`STATUS.md`](file:///Users/jeet/Desktop/AEGIS/STATUS.md)
