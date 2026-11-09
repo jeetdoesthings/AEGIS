@@ -67,10 +67,10 @@ class LoRALinear(nn.Module):
 
 
 class MLP(nn.Module):
-    def __init__(self, n_tasks=1, r=8, lora=False, h=256):
+    def __init__(self, n_tasks=1, r=8, lora=False, h=256, num_classes=10):
         super().__init__()
         mk = (lambda i, o: LoRALinear(i, o, n_tasks, r)) if lora else nn.Linear
-        self.l1, self.l2, self.l3 = mk(784, h), mk(h, h), mk(h, 10)
+        self.l1, self.l2, self.l3 = mk(784, h), mk(h, h), mk(h, num_classes)
 
     def forward(self, x):
         return self.l3(F.relu(self.l2(F.relu(self.l1(x)))))
@@ -139,12 +139,12 @@ def fisher_diag(model, Xp, n=500):
 
 # ---------------------------------------------------------------- train / eval
 @torch.no_grad()
-def evaluate(model, Xtes, yte, kind):
+def evaluate(model, Xtes, ytes, kind):
     accs = []
-    for j, Xj in enumerate(Xtes):
+    for j, (Xj, yj) in enumerate(zip(Xtes, ytes)):
         if kind == "lora":
             model.set_task(None if j == 0 else j)
-        accs.append((model(Xj).argmax(1) == yte).float().mean().item())
+        accs.append((model(Xj).argmax(1) == yj).float().mean().item())
     return accs
 
 
@@ -185,16 +185,29 @@ def run(method, args, seed, data):
     mode = parts[1] if len(parts) > 1 else "conflict"
     beta = float(parts[2]) if len(parts) > 2 else args.beta
 
-    perms = make_perms(args.tasks, seed)
-    Xtes = [Xte[:, p] for p in perms]
-    model = MLP(n_tasks=args.tasks, r=getattr(args, "r", 8), lora=(kind == "lora")).to(dev)
-    base = evaluate(model, Xtes, yte, kind)  # untrained reference for FWT
+    is_split = getattr(args, "bench", "permmnist") == "splitmnist"
+    num_classes = 2 if is_split else 10
+    model = MLP(n_tasks=args.tasks, r=getattr(args, "r", 8), lora=(kind == "lora"), num_classes=num_classes).to(dev)
+
+    if is_split:
+        task_data_tr = []
+        for t in range(args.tasks):
+            mask = (ytr == 2 * t) | (ytr == 2 * t + 1)
+            task_data_tr.append((Xtr[mask], ytr[mask] - 2 * t))
+        Xtes = [Xte[(yte == 2 * j) | (yte == 2 * j + 1)] for j in range(args.tasks)]
+        ytes = [yte[(yte == 2 * j) | (yte == 2 * j + 1)] - 2 * j for j in range(args.tasks)]
+    else:
+        perms = make_perms(args.tasks, seed)
+        task_data_tr = [(Xtr[:, p], ytr) for p in perms]
+        Xtes = [Xte[:, p] for p in perms]
+        ytes = [yte] * args.tasks
+
+    base = evaluate(model, Xtes, ytes, kind)  # untrained reference for FWT
     gate = Gate(model, mode, beta, args.decay) if kind == "gate" else None
     st = {"F": None, "star": None, "bx": None, "by": None}
     R = []
 
-    for t, p in enumerate(perms):
-        Xp = Xtr[:, p]
+    for t, (Xp, y_task) in enumerate(task_data_tr):
         if kind == "lora":
             if t > 0:
                 for q in model.parameters():
@@ -207,7 +220,7 @@ def run(method, args, seed, data):
             gate.begin_task(model)
         params = [q for q in model.parameters() if q.requires_grad]
         opt = torch.optim.SGD(params, lr=args.lr)
-        success = train_task(model, opt, Xp, ytr, args, kind, st, gate)
+        success = train_task(model, opt, Xp, y_task, args, kind, st, gate)
         if not success:
             return {
                 "diverged": True,
@@ -227,8 +240,8 @@ def run(method, args, seed, data):
         if kind == "replay":
             k = torch.randperm(Xp.size(0), device=dev)[:args.buf]
             st["bx"] = Xp[k] if st["bx"] is None else torch.cat([st["bx"], Xp[k]])
-            st["by"] = ytr[k] if st["by"] is None else torch.cat([st["by"], ytr[k]])
-        R.append(evaluate(model, Xtes, yte, kind))
+            st["by"] = y_task[k] if st["by"] is None else torch.cat([st["by"], y_task[k]])
+        R.append(evaluate(model, Xtes, ytes, kind))
 
     R = np.array(R)
     T = args.tasks
@@ -253,6 +266,7 @@ def main():
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--seed_start", type=int, default=0)
     ap.add_argument("--eval_split", choices=["val", "test"], default="test")
+    ap.add_argument("--bench", choices=["permmnist", "splitmnist"], default="permmnist")
     ap.add_argument("--out", type=str, default="")
     ap.add_argument("--clip", type=float, default=0.0, help="Gradient norm clipping max_norm (0.0=disabled)")
     ap.add_argument("--ewc_lambda", type=float, default=5000)

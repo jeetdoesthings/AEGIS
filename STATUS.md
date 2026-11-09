@@ -81,3 +81,22 @@
   4. The magnitude gate clearly separates from fine-tuning (+4.92 ± 1.20% ACC, +7.97 ± 1.34% BWT).
   5. The conflict gate suffers severe compounding degradation over 10 tasks: ACC collapses to 41.92% (-36.29% vs FT) and BWT plunges to -58.83%.
 - next: Task 2.2
+
+## Task 2.2 Split-MNIST, domain-incremental
+- status: done
+- what changed: Added `--bench splitmnist` to cl2.py with domain-incremental 2-class output heads across 5 sequential digit pair tasks. Implemented tune_and_run_split.py. Tuned all 7 methods across 25 configurations on validation (seeds 0-2), saved outputs/phase2/tuning_split_val.csv, locked best configurations into configs/locked_split.json, and ran final 5 seeds (100-104) on test split. Generated outputs/phase2/final_split.json, outputs/phase2/final_split_table.csv, outputs/phase2/final_split_table.png, outputs/phase2/forgetting_curve_split.png, and outputs/phase2/heatmaps_split.png.
+- key numbers: (From outputs/phase2/final_split_table.csv, 5 seeds 100-104 on test split, mean ± std):
+  - lora (r=8, oracle task ID): ACC 98.73 ± 0.06% (diff vs FT: +36.66 ± 1.02%), BWT 0.00 ± 0.00% (diff vs FT: +46.36 ± 1.23%), NEW 98.73 ± 0.06% [BEST ACC]
+  - replay (buf=1000): ACC 96.85 ± 0.30% (diff vs FT: +34.78 ± 1.17%), BWT -2.69 ± 0.29% (diff vs FT: +43.67 ± 1.41%), NEW 99.00 ± 0.09%
+  - ewc (lambda=100): ACC 63.96 ± 1.39% (diff vs FT: +1.90 ± 1.79%), BWT -43.76 ± 1.72% (diff vs FT: +2.60 ± 2.16%), NEW 98.97 ± 0.10% (tied with FT)
+  - gate:conflict (beta=0.25, decay=1.0): ACC 62.28 ± 0.98% (diff vs FT: +0.21 ± 0.35%), BWT -45.88 ± 1.24% (diff vs FT: +0.49 ± 0.48%), NEW 98.98 ± 0.06% (tied with FT)
+  - finetune: ACC 62.07 ± 1.00%, BWT -46.36 ± 1.23%, NEW 99.16 ± 0.03%
+  - gate:layer_cos (beta=0.5, decay=1.0): ACC 62.05 ± 1.02% (diff vs FT: -0.02 ± 0.04%), BWT -46.39 ± 1.26% (diff vs FT: -0.03 ± 0.05%), NEW 99.16 ± 0.04% (tied with FT)
+  - gate:magnitude (beta=1.0, decay=0.9): ACC 61.90 ± 0.36% (diff vs FT: -0.16 ± 0.72%), BWT -45.83 ± 0.51% (diff vs FT: +0.54 ± 0.83%), NEW 98.56 ± 0.07% (tied with FT)
+- problems / decisions: Cross-benchmark ranking analysis (5 comparison sentences, MEASURED only):
+  1. [MEASURED] Across all three benchmarks, LoRA and replay consistently occupy the top two ranks, with LoRA taking rank 1 on Split-MNIST (98.73 ± 0.06% ACC) and replay taking rank 1 on both 5-task Permuted-MNIST (95.85 ± 0.11% ACC) and 10-task Permuted-MNIST (95.22 ± 0.09% ACC).
+  2. [MEASURED] EWC maintains rank 3 across all three benchmarks (93.76 ± 0.36% on Perm5, 90.22 ± 0.87% on Perm10, 63.96 ± 1.39% on Split-MNIST), but its margin over fine-tuning drops from +12.01% on Perm10 into a statistical tie on Split-MNIST (+1.90 ± 1.79% diff, intervals overlap).
+  3. [MEASURED] Gate:magnitude ranks 4th on both Perm5 (91.43 ± 0.86% ACC) and Perm10 (83.13 ± 1.22% ACC), significantly outperforming fine-tuning on both (+2.46% and +4.92% respectively), but drops to rank 7 on Split-MNIST (61.90 ± 0.36% ACC), where its interval overlaps with fine-tuning (62.07 ± 1.00%).
+  4. [MEASURED] Gate:conflict ranks last (7th) on both Perm5 (81.73 ± 1.41% ACC, -7.24% vs FT) and Perm10 (41.92 ± 1.71% ACC, -36.29% vs FT), but moves up to rank 4 on Split-MNIST (62.28 ± 0.98% ACC) where all buffer-free regularization methods collapse into a statistical tie around 62%.
+  5. [MEASURED] Gate:layer_cos remains tied with plain fine-tuning across all three benchmarks: 89.00 ± 2.32% vs 88.97 ± 1.85% on Perm5, 78.80 ± 0.97% vs 78.21 ± 1.68% on Perm10, and 62.05 ± 1.02% vs 62.07 ± 1.00% on Split-MNIST.
+- next: Task 3.1

@@ -1,0 +1,70 @@
+{
+  "finetune": {
+    "method": "finetune",
+    "tag": "finetune",
+    "ACC": "62.25 \u00b1 0.12",
+    "BWT": "-45.67 \u00b1 0.13",
+    "NEW": "98.79 \u00b1 0.10",
+    "params": {}
+  },
+  "ewc": {
+    "method": "ewc",
+    "tag": "ewc_lam100",
+    "ACC": "64.41 \u00b1 0.33",
+    "BWT": "-42.90 \u00b1 0.45",
+    "NEW": "98.73 \u00b1 0.05",
+    "params": {
+      "ewc_lambda": 100.0
+    }
+  },
+  "replay": {
+    "method": "replay",
+    "tag": "replay_buf1000",
+    "ACC": "96.30 \u00b1 0.54",
+    "BWT": "-2.85 \u00b1 0.61",
+    "NEW": "98.58 \u00b1 0.07",
+    "params": {
+      "buf": 1000
+    }
+  },
+  "lora": {
+    "method": "lora",
+    "tag": "lora_r8",
+    "ACC": "98.42 \u00b1 0.04",
+    "BWT": "0.00 \u00b1 0.00",
+    "NEW": "98.42 \u00b1 0.04",
+    "params": {
+      "r": 8
+    }
+  },
+  "gate:conflict": {
+    "method": "gate:conflict:0.25",
+    "tag": "gate_conf_b025_d10",
+    "ACC": "62.56 \u00b1 0.09",
+    "BWT": "-45.14 \u00b1 0.03",
+    "NEW": "98.67 \u00b1 0.11",
+    "params": {
+      "decay": 1.0
+    }
+  },
+  "gate:magnitude": {
+    "method": "gate:magnitude:1.0",
+    "tag": "gate_mag_b10_d09",
+    "ACC": "62.70 \u00b1 0.34",
+    "BWT": "-44.61 \u00b1 0.32",
+    "NEW": "98.39 \u00b1 0.09",
+    "params": {
+      "decay": 0.9
+    }
+  },
+  "gate:layer_cos": {
+    "method": "gate:layer_cos:0.5",
+    "tag": "gate_cos_b05_d10",
+    "ACC": "62.32 \u00b1 0.08",
+    "BWT": "-45.58 \u00b1 0.12",
+    "NEW": "98.79 \u00b1 0.08",
+    "params": {
+      "decay": 1.0
+    }
+  }
+}
