@@ -1,0 +1,5 @@
+Benchmark,Method,ACC,Δ ACC vs FT,BWT,Δ BWT vs FT,FWT,NEW
+splitmnist,finetune,62.07 ± 1.00,reference,-46.36 ± 1.23,reference,2.45 ± 2.98,99.16 ± 0.03
+splitmnist,gate:drift,62.62 ± 1.03,+0.55 ± 0.15,-45.61 ± 1.27,+0.75 ± 0.19,2.40 ± 3.05,99.11 ± 0.03
+splitmnist,gate:hybrid,62.78 ± 0.56,+0.72 ± 0.54,-45.11 ± 0.71,+1.26 ± 0.64,2.42 ± 3.05,98.87 ± 0.01
+splitmnist,gate:conflict_soft,62.34 ± 1.03,+0.27 ± 0.18,-45.99 ± 1.28,+0.38 ± 0.24,2.43 ± 3.03,99.13 ± 0.04

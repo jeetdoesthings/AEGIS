@@ -1,0 +1,108 @@
+=== Step 1: Tuning Repaired Gate Variants (Validation Split, Seeds 0-2) ===
+Tuning drift_b01_d10 (gate:drift:0.1)...
+Tuning drift_b01_d09 (gate:drift:0.1)...
+Tuning drift_b025_d10 (gate:drift:0.25)...
+Tuning drift_b025_d09 (gate:drift:0.25)...
+Tuning drift_b05_d10 (gate:drift:0.5)...
+Tuning drift_b05_d09 (gate:drift:0.5)...
+Tuning hybrid_b01_g025_d10 (gate:hybrid:0.1:0.25)...
+Tuning hybrid_b01_g05_d10 (gate:hybrid:0.1:0.5)...
+Tuning hybrid_b025_g025_d10 (gate:hybrid:0.25:0.25)...
+Tuning hybrid_b025_g05_d10 (gate:hybrid:0.25:0.5)...
+Tuning hybrid_b01_g025_d09 (gate:hybrid:0.1:0.25)...
+Tuning hybrid_b025_g025_d09 (gate:hybrid:0.25:0.25)...
+Tuning confsoft_b005_d10 (gate:conflict_soft:0.05)...
+Tuning confsoft_b005_d09 (gate:conflict_soft:0.05)...
+Tuning confsoft_b01_d10 (gate:conflict_soft:0.1)...
+Tuning confsoft_b01_d09 (gate:conflict_soft:0.1)...
+Saved outputs/phase3/tuning_repaired_val.csv
+Saved configs/locked_repaired.json:
+{
+  "drift": {
+    "method": "gate:drift:0.1",
+    "tag": "drift_b01_d09",
+    "ACC": "93.21 \u00b1 0.96",
+    "BWT": "-3.68 \u00b1 1.23",
+    "NEW": "96.15 \u00b1 0.02",
+    "params": {
+      "beta": 0.1,
+      "decay": 0.9
+    }
+  },
+  "hybrid": {
+    "method": "gate:hybrid:0.1:0.5",
+    "tag": "hybrid_b01_g05_d10",
+    "ACC": "92.09 \u00b1 1.47",
+    "BWT": "-4.73 \u00b1 1.83",
+    "NEW": "95.87 \u00b1 0.04",
+    "params": {
+      "beta": 0.1,
+      "gamma": 0.5,
+      "decay": 1.0
+    }
+  },
+  "conflict_soft": {
+    "method": "gate:conflict_soft:0.05",
+    "tag": "confsoft_b005_d09",
+    "ACC": "92.30 \u00b1 1.46",
+    "BWT": "-5.01 \u00b1 1.85",
+    "NEW": "96.31 \u00b1 0.02",
+    "params": {
+      "beta": 0.05,
+      "decay": 0.9
+    }
+  }
+}
+
+=== Step 2: Final Evaluation of Repaired Variants (5 Seeds 100-104, Test Split) ===
+
+--- Benchmark: perm5 (permmnist, 5 tasks) ---
+Running finetune (finetune)...
+Running gate:drift (gate:drift:0.1)...
+Running gate:hybrid (gate:hybrid:0.1:0.5)...
+Running gate:conflict_soft (gate:conflict_soft:0.05)...
+Saved outputs/phase3/final_repaired_perm5.json
+Saved outputs/phase3/final_repaired_perm5_table.csv
+
+  Benchmark              Method           ACC   Δ ACC vs FT           BWT   Δ BWT vs FT          FWT           NEW
+0     perm5            finetune  88.97 ± 1.85     reference  -9.62 ± 2.34     reference  1.51 ± 0.82  96.67 ± 0.12
+1     perm5          gate:drift  91.89 ± 1.03  +2.92 ± 0.96  -5.82 ± 1.39  +3.80 ± 1.16  1.45 ± 0.70  96.54 ± 0.11
+2     perm5         gate:hybrid  90.98 ± 0.90  +2.01 ± 1.35  -6.64 ± 1.20  +2.98 ± 1.64  1.43 ± 0.88  96.29 ± 0.08
+3     perm5  gate:conflict_soft  90.68 ± 0.58  +1.71 ± 1.58  -7.44 ± 0.79  +2.17 ± 1.96  1.42 ± 0.89  96.63 ± 0.11
+
+--- Benchmark: perm10 (permmnist, 10 tasks) ---
+Running finetune (finetune)...
+Running gate:drift (gate:drift:0.1)...
+Running gate:hybrid (gate:hybrid:0.1:0.5)...
+Running gate:conflict_soft (gate:conflict_soft:0.05)...
+Saved outputs/phase3/final_repaired_perm10.json
+Saved outputs/phase3/final_repaired_perm10_table.csv
+
+  Benchmark              Method           ACC   Δ ACC vs FT            BWT   Δ BWT vs FT          FWT           NEW
+0    perm10            finetune  78.21 ± 1.68     reference  -20.80 ± 1.84     reference  0.58 ± 0.61  96.92 ± 0.10
+1    perm10          gate:drift  83.21 ± 1.26  +5.01 ± 1.48  -14.98 ± 1.44  +5.82 ± 1.59  0.68 ± 0.73  96.69 ± 0.08
+2    perm10         gate:hybrid  83.82 ± 0.54  +5.62 ± 1.21  -13.95 ± 0.64  +6.84 ± 1.30  0.47 ± 1.06  96.38 ± 0.05
+3    perm10  gate:conflict_soft  80.05 ± 1.66  +1.85 ± 1.38  -18.58 ± 1.86  +2.22 ± 1.52  0.94 ± 0.65  96.77 ± 0.10
+
+--- Benchmark: splitmnist (splitmnist, 5 tasks) ---
+Running finetune (finetune)...
+Running gate:drift (gate:drift:0.1)...
+Running gate:hybrid (gate:hybrid:0.1:0.5)...
+Running gate:conflict_soft (gate:conflict_soft:0.05)...
+Saved outputs/phase3/final_repaired_splitmnist.json
+Saved outputs/phase3/final_repaired_splitmnist_table.csv
+
+    Benchmark              Method           ACC   Δ ACC vs FT            BWT   Δ BWT vs FT          FWT           NEW
+0  splitmnist            finetune  62.07 ± 1.00     reference  -46.36 ± 1.23     reference  2.45 ± 2.98  99.16 ± 0.03
+1  splitmnist          gate:drift  62.62 ± 1.03  +0.55 ± 0.15  -45.61 ± 1.27  +0.75 ± 0.19  2.40 ± 3.05  99.11 ± 0.03
+2  splitmnist         gate:hybrid  62.78 ± 0.56  +0.72 ± 0.54  -45.11 ± 0.71  +1.26 ± 0.64  2.42 ± 3.05  98.87 ± 0.01
+3  splitmnist  gate:conflict_soft  62.34 ± 1.03  +0.27 ± 0.18  -45.99 ± 1.28  +0.38 ± 0.24  2.43 ± 3.03  99.13 ± 0.04
+
+=== Task 3.4: Layer Analysis for Best Gate Variant ===
+Analyzing layer-wise gated fraction for gate:drift:0.1...
+Traceback (most recent call last):
+  File "/Users/jeet/Desktop/AEGIS/tune_and_run_repaired.py", line 291, in <module>
+    run_layer_analysis(locked)
+  File "/Users/jeet/Desktop/AEGIS/tune_and_run_repaired.py", line 222, in run_layer_analysis
+    loss = F.cross_entropy(model(Xp[b]), ytr[b])
+NameError: name 'F' is not defined

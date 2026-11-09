@@ -1,0 +1,23 @@
+=== Task 3.1 & 3.2: Diagnostics Logging & Ratchet Hypothesis Test ===
+
+Running diagnostics for finetune (finetune)...
+Completed diagnostics for finetune.
+
+Running diagnostics for gate_conflict (gate:conflict:0.25)...
+Completed diagnostics for gate_conflict.
+
+Running diagnostics for gate_magnitude (gate:magnitude:1.0)...
+Completed diagnostics for gate_magnitude.
+Saved outputs/phase3/diag_finetune.csv
+Saved outputs/phase3/diag_gate_conflict.csv
+Saved outputs/phase3/diag_gate_magnitude.csv
+Saved outputs/phase3/diag_all.csv
+Saved outputs/phase3/weight_norms.png
+Saved outputs/phase3/drift_along_d.png
+Saved outputs/phase3/gated_fraction.png
+
+=== Evaluating Ratchet Hypothesis ===
+Task 5 l1.weight Norm: Conf=22.700, FT=11.790, Mag=12.291
+Task 5 l1.weight Drift along d: Conf=2.263, FT=-0.145, Mag=-0.016
+
+Wrote outputs/phase3/hypothesis.md

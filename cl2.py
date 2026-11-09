@@ -83,12 +83,20 @@ class MLP(nn.Module):
 
 # ---------------------------------------------------------------- our method
 class Gate:
-    """Keeps d = direction old learning pushed each weight (decayed sum of per-task
-    displacement). During new-task training it shrinks gradient entries whose SGD
-    step would move a weight back against d."""
+    """Selective Plasticity Gate.
+    Modes:
+      - conflict: shrinks updates pointing against past displacement d (1 - beta * mag * [g*d > 0]).
+      - magnitude: shrinks updates purely based on past displacement magnitude (1 - beta * mag).
+      - layer_cos: layer-wise cosine similarity between proposed step and d.
+      - drift: anti-ratchet gate. Scales down steps that either oppose d or increase distance
+        from theta_star: 1 - beta * mag * [(g*d > 0) or (g*e < 0)] where e = p - theta_star.
+      - hybrid: combines directional conflict and magnitude:
+        (1 - beta * mag * [g*d > 0]) * (1 - gamma * mag).
+      - conflict_soft: gentle conflict gate with small beta (0.05, 0.1).
+    """
 
-    def __init__(self, model, mode, beta, decay):
-        self.mode, self.beta, self.decay = mode, beta, decay
+    def __init__(self, model, mode, beta, decay, gamma=0.25):
+        self.mode, self.beta, self.decay, self.gamma = mode, beta, decay, gamma
         self.d = [torch.zeros_like(p) for p in model.parameters()]
         self.start = None
 
@@ -101,21 +109,27 @@ class Gate:
 
     @torch.no_grad()
     def apply(self, model):
-        for p, d in zip(model.parameters(), self.d):
+        for p, d, s in zip(model.parameters(), self.d, self.start):
             if p.grad is None or not d.any():
                 continue
             g = p.grad
-            # how strongly old learning moved this weight (1.0 = at or above layer average)
             mag = (d.abs() / (d.abs().mean() + 1e-12)).clamp(max=1.0)
-            if self.mode == "conflict":
-                conflict = (g * d > 0).float()  # step -g points against d
+            if self.mode in ("conflict", "conflict_soft"):
+                conflict = (g * d > 0).float()
                 g.mul_(1 - self.beta * mag * conflict)
             elif self.mode == "magnitude":
                 g.mul_(1 - self.beta * mag)
             elif self.mode == "layer_cos":
-                c = -(g * d).sum() / (g.norm() * d.norm() + 1e-12)  # cos(step, d)
+                c = -(g * d).sum() / (g.norm() * d.norm() + 1e-12)
                 if c < 0:
                     g.mul_(1 - self.beta * (-c))
+            elif self.mode == "drift":
+                e = p.detach() - s
+                cond = ((g * d > 0) | (g * e < 0)).float()
+                g.mul_(1 - self.beta * mag * cond)
+            elif self.mode == "hybrid":
+                conflict = (g * d > 0).float()
+                g.mul_((1 - self.beta * mag * conflict) * (1 - self.gamma * mag))
 
 
 # ---------------------------------------------------------------- EWC helpers
@@ -184,6 +198,7 @@ def run(method, args, seed, data):
     kind = parts[0]
     mode = parts[1] if len(parts) > 1 else "conflict"
     beta = float(parts[2]) if len(parts) > 2 else args.beta
+    gamma = float(parts[3]) if len(parts) > 3 else getattr(args, "gamma", 0.25)
 
     is_split = getattr(args, "bench", "permmnist") == "splitmnist"
     num_classes = 2 if is_split else 10
@@ -203,7 +218,7 @@ def run(method, args, seed, data):
         ytes = [yte] * args.tasks
 
     base = evaluate(model, Xtes, ytes, kind)  # untrained reference for FWT
-    gate = Gate(model, mode, beta, args.decay) if kind == "gate" else None
+    gate = Gate(model, mode, beta, args.decay, gamma=gamma) if kind == "gate" else None
     st = {"F": None, "star": None, "bx": None, "by": None}
     R = []
 
@@ -273,6 +288,7 @@ def main():
     ap.add_argument("--buf", type=int, default=200)
     ap.add_argument("--r", type=int, default=8, help="LoRA rank")
     ap.add_argument("--beta", type=float, default=1.0)
+    ap.add_argument("--gamma", type=float, default=0.25)
     ap.add_argument("--decay", type=float, default=1.0)
     args = ap.parse_args()
 

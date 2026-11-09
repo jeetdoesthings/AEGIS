@@ -1,0 +1,36 @@
+{
+  "drift": {
+    "method": "gate:drift:0.1",
+    "tag": "drift_b01_d09",
+    "ACC": "93.21 \u00b1 0.96",
+    "BWT": "-3.68 \u00b1 1.23",
+    "NEW": "96.15 \u00b1 0.02",
+    "params": {
+      "beta": 0.1,
+      "decay": 0.9
+    }
+  },
+  "hybrid": {
+    "method": "gate:hybrid:0.1:0.5",
+    "tag": "hybrid_b01_g05_d10",
+    "ACC": "92.09 \u00b1 1.47",
+    "BWT": "-4.73 \u00b1 1.83",
+    "NEW": "95.87 \u00b1 0.04",
+    "params": {
+      "beta": 0.1,
+      "gamma": 0.5,
+      "decay": 1.0
+    }
+  },
+  "conflict_soft": {
+    "method": "gate:conflict_soft:0.05",
+    "tag": "confsoft_b005_d09",
+    "ACC": "92.30 \u00b1 1.46",
+    "BWT": "-5.01 \u00b1 1.85",
+    "NEW": "96.31 \u00b1 0.02",
+    "params": {
+      "beta": 0.05,
+      "decay": 0.9
+    }
+  }
+}

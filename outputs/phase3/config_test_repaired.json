@@ -1,0 +1,29 @@
+{
+  "methods": [
+    "gate:drift:0.25",
+    "gate:hybrid:0.25:0.25",
+    "gate:conflict_soft:0.1"
+  ],
+  "tasks": 5,
+  "epochs": 1,
+  "lr": 0.05,
+  "bs": 128,
+  "seeds": 1,
+  "seed_start": 0,
+  "eval_split": "val",
+  "bench": "permmnist",
+  "out": "phase3/test_repaired",
+  "clip": 0.0,
+  "ewc_lambda": 5000,
+  "buf": 200,
+  "r": 8,
+  "beta": 1.0,
+  "gamma": 0.25,
+  "decay": 1.0,
+  "git_commit": "9eac5c34a7ddd129139b59783b6802408aba5f38",
+  "torch_version": "2.8.0",
+  "device": "cpu",
+  "seeds_evaluated": [
+    0
+  ]
+}
