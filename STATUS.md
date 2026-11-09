@@ -62,3 +62,22 @@
   2. The magnitude gate genuinely mitigates forgetting without data buffers: +2.46 ± 1.73% ACC over fine-tuning, cutting forgetting in half (-4.39% vs -9.62% BWT).
   3. Repaired EWC (lambda=20) is strong (+4.78 ± 1.69% ACC over FT), trailing only replay and LoRA.
 - next: Task 2.1
+
+## Task 2.1 10-task Permuted-MNIST
+- status: done
+- what changed: Implemented and executed run_perm10.py. Evaluated all 7 locked method configurations on a 10-task sequential sequence across 5 test seeds (100-104) on the test split. Saved outputs to outputs/phase2/final_perm10.json, outputs/phase2/final_perm10_table.csv, outputs/phase2/final_perm10_table.png, outputs/phase2/forgetting_curve_perm10.png, and outputs/phase2/heatmaps_perm10.png. Computed per-seed paired differences against fine-tuning.
+- key numbers: (From outputs/phase2/final_perm10_table.csv, 5 seeds 100-104 on test split, mean ± std):
+  - replay (buf=1000): ACC 95.22 ± 0.09% (diff vs FT: +17.01 ± 1.70%), BWT -1.92 ± 0.14% (diff vs FT: +18.88 ± 1.88%), NEW 96.94 ± 0.05% [BEST ACC]
+  - lora (r=16, oracle task ID): ACC 94.05 ± 0.05% (diff vs FT: +15.84 ± 1.69%), BWT 0.00 ± 0.00% (diff vs FT: +20.80 ± 1.84%), NEW 94.05 ± 0.05% [LEAST FORGETTING]
+  - ewc (lambda=20): ACC 90.22 ± 0.87% (diff vs FT: +12.01 ± 0.86%), BWT -4.17 ± 0.93% (diff vs FT: +16.63 ± 1.08%), NEW 93.97 ± 0.15%
+  - gate:magnitude (beta=1.0, decay=1.0): ACC 83.13 ± 1.22% (diff vs FT: +4.92 ± 1.20%), BWT -12.82 ± 1.33% (diff vs FT: +7.97 ± 1.34%), NEW 94.67 ± 0.04%
+  - gate:layer_cos (beta=1.0, decay=1.0): ACC 78.80 ± 0.97% (diff vs FT: +0.59 ± 2.40%), BWT -20.15 ± 1.15% (diff vs FT: +0.64 ± 2.66%), NEW 96.94 ± 0.09% (statistical tie with FT)
+  - finetune: ACC 78.21 ± 1.68%, BWT -20.80 ± 1.84%, NEW 96.92 ± 0.10%
+  - gate:conflict (beta=0.25, decay=1.0): ACC 41.92 ± 1.71% (diff vs FT: -36.29 ± 2.82%), BWT -58.83 ± 1.95% (diff vs FT: -38.03 ± 3.13%), NEW 94.86 ± 0.15%
+- problems / decisions: [MEASURED]
+  1. With 10 tasks, catastrophic forgetting in fine-tuning doubles from -9.62% to -20.80% BWT, dropping ACC to 78.21%.
+  2. Replay and LoRA remain completely resilient (ACC 95.22% and 94.05%).
+  3. Repaired EWC demonstrates massive retention capability: +12.01 ± 0.86% ACC over fine-tuning, curbing forgetting to -4.17%.
+  4. The magnitude gate clearly separates from fine-tuning (+4.92 ± 1.20% ACC, +7.97 ± 1.34% BWT).
+  5. The conflict gate suffers severe compounding degradation over 10 tasks: ACC collapses to 41.92% (-36.29% vs FT) and BWT plunges to -58.83%.
+- next: Task 2.2
