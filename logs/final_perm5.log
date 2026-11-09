@@ -1,0 +1,74 @@
+=== Task 1.4: Final Run on Permuted-MNIST (5 tasks, 5 seeds 100-104, test split) ===
+Locked configurations loaded:
+  finetune: finetune (params: {'ewc_lambda': 5000, 'buf': 200, 'r': 8, 'decay': 1.0})
+  ewc: ewc (params: {'ewc_lambda': 20.0, 'buf': 200, 'r': 8, 'decay': 1.0})
+  replay: replay (params: {'ewc_lambda': 5000, 'buf': 1000, 'r': 8, 'decay': 1.0})
+  lora: lora (params: {'ewc_lambda': 5000, 'buf': 200, 'r': 16, 'decay': 1.0})
+  gate:conflict: gate:conflict:0.25 (params: {'ewc_lambda': 5000, 'buf': 200, 'r': 8, 'decay': 1.0})
+  gate:magnitude: gate:magnitude:1.0 (params: {'ewc_lambda': 5000, 'buf': 200, 'r': 8, 'decay': 1.0})
+  gate:layer_cos: gate:layer_cos:1.0 (params: {'ewc_lambda': 5000, 'buf': 200, 'r': 8, 'decay': 1.0})
+
+Running finetune (finetune)...
+  Seed 100: ACC=91.44%, BWT=-6.65%, NEW=96.77%
+  Seed 101: ACC=89.58%, BWT=-8.79%, NEW=96.61%
+  Seed 102: ACC=88.55%, BWT=-10.24%, NEW=96.74%
+  Seed 103: ACC=85.78%, BWT=-13.71%, NEW=96.75%
+  Seed 104: ACC=89.51%, BWT=-8.69%, NEW=96.46%
+
+Running ewc (ewc)...
+  Seed 100: ACC=94.37%, BWT=-1.65%, NEW=95.69%
+  Seed 101: ACC=93.87%, BWT=-1.70%, NEW=95.24%
+  Seed 102: ACC=93.56%, BWT=-2.77%, NEW=95.77%
+  Seed 103: ACC=93.66%, BWT=-2.69%, NEW=95.81%
+  Seed 104: ACC=93.31%, BWT=-2.89%, NEW=95.62%
+
+Running replay (replay)...
+  Seed 100: ACC=95.97%, BWT=-1.14%, NEW=96.88%
+  Seed 101: ACC=95.73%, BWT=-1.24%, NEW=96.72%
+  Seed 102: ACC=95.90%, BWT=-1.11%, NEW=96.79%
+  Seed 103: ACC=95.94%, BWT=-1.00%, NEW=96.74%
+  Seed 104: ACC=95.72%, BWT=-1.42%, NEW=96.86%
+
+Running lora (lora)...
+  Seed 100: ACC=94.48%, BWT=0.00%, NEW=94.48%
+  Seed 101: ACC=94.18%, BWT=0.00%, NEW=94.18%
+  Seed 102: ACC=94.39%, BWT=0.00%, NEW=94.39%
+  Seed 103: ACC=94.19%, BWT=0.00%, NEW=94.19%
+  Seed 104: ACC=94.25%, BWT=0.00%, NEW=94.25%
+
+Running gate:conflict (gate:conflict:0.25)...
+  Seed 100: ACC=81.50%, BWT=-17.89%, NEW=95.81%
+  Seed 101: ACC=82.81%, BWT=-16.27%, NEW=95.83%
+  Seed 102: ACC=82.55%, BWT=-16.66%, NEW=95.88%
+  Seed 103: ACC=79.08%, BWT=-21.06%, NEW=95.92%
+  Seed 104: ACC=82.73%, BWT=-16.12%, NEW=95.62%
+
+Running gate:magnitude (gate:magnitude:1.0)...
+  Seed 100: ACC=92.32%, BWT=-3.41%, NEW=95.04%
+  Seed 101: ACC=92.49%, BWT=-3.09%, NEW=94.96%
+  Seed 102: ACC=90.54%, BWT=-5.47%, NEW=94.92%
+  Seed 103: ACC=91.37%, BWT=-4.44%, NEW=94.92%
+  Seed 104: ACC=90.44%, BWT=-5.52%, NEW=94.85%
+
+Running gate:layer_cos (gate:layer_cos:1.0)...
+  Seed 100: ACC=90.84%, BWT=-7.42%, NEW=96.78%
+  Seed 101: ACC=90.54%, BWT=-7.64%, NEW=96.65%
+  Seed 102: ACC=88.18%, BWT=-10.74%, NEW=96.77%
+  Seed 103: ACC=84.79%, BWT=-15.00%, NEW=96.79%
+  Seed 104: ACC=90.63%, BWT=-7.30%, NEW=96.47%
+
+Saved raw results to outputs/phase1/final_perm5.json
+
+Method                     ACC (%)      diff vs FT         BWT (%)      diff vs FT         FWT (%)         NEW (%)
+------------------------------------------------------------------------------------------------------
+finetune              88.97 ± 1.85       reference    -9.62 ± 2.34       reference     1.51 ± 0.82    96.67 ± 0.12
+ewc                   93.76 ± 0.36    +4.78 ± 1.69    -2.34 ± 0.55    +7.28 ± 2.07     1.63 ± 0.63    95.63 ± 0.21
+replay                95.85 ± 0.11    +6.88 ± 1.87    -1.18 ± 0.14    +8.43 ± 2.43     1.86 ± 1.32    96.80 ± 0.06
+lora                  94.30 ± 0.12    +5.32 ± 1.78     0.00 ± 0.00    +9.62 ± 2.34     2.05 ± 1.63    94.30 ± 0.12
+gate:conflict         81.73 ± 1.41    -7.24 ± 1.38   -17.60 ± 1.84    -7.98 ± 1.67     1.68 ± 1.33    95.81 ± 0.10
+gate:magnitude        91.43 ± 0.86    +2.46 ± 1.73    -4.39 ± 1.01    +5.23 ± 2.23     1.68 ± 1.15    94.94 ± 0.06
+gate:layer_cos        89.00 ± 2.32    +0.02 ± 0.86    -9.62 ± 2.98    -0.00 ± 1.07     1.37 ± 0.77    96.69 ± 0.12
+Saved outputs/phase1/final_perm5_table.csv
+Saved outputs/phase1/final_perm5_table.png
+Saved outputs/phase1/forgetting_curve_perm5.png
+Saved outputs/phase1/heatmaps_perm5.png

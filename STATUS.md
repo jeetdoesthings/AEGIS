@@ -45,3 +45,20 @@
   - gate:layer_cos (locked: beta=1.0, decay=1.0): ACC 91.06 ± 1.47%, BWT -6.68 ± 1.83%
 - problems / decisions: [MEASURED] Decreasing beta to 0.25 rescues gate:conflict from catastrophic collapse (82.9% vs ~14.5% at beta=1.0), but it still underperforms fine-tuning by 7.9% ACC. EWC with lambda=20 and replay with buf=1000 are the top-performing baselines.
 - next: Task 1.4
+
+## Task 1.4 Final run on Permuted-MNIST, 5 tasks
+- status: done
+- what changed: Implemented run_final_perm5.py. Evaluated all 7 locked method configurations on the test split across 5 fresh test seeds (100, 101, 102, 103, 104). Saved raw results to outputs/phase1/final_perm5.json, generated summary CSV outputs/phase1/final_perm5_table.csv, rendered table image outputs/phase1/final_perm5_table.png, plotted task 1 forgetting curves with mean ± std bands to outputs/phase1/forgetting_curve_perm5.png, and generated 7-method accuracy matrix heatmaps to outputs/phase1/heatmaps_perm5.png. Computed paired difference per seed versus plain fine-tuning.
+- key numbers: (From outputs/phase1/final_perm5_table.csv, 5 seeds 100-104 on test split, mean ± std):
+  - replay (buf=1000): ACC 95.85 ± 0.11% (diff vs FT: +6.88 ± 1.87%), BWT -1.18 ± 0.14% (diff vs FT: +8.43 ± 2.43%), NEW 96.80 ± 0.06% [BEST ACC]
+  - lora (r=16, oracle task ID): ACC 94.30 ± 0.12% (diff vs FT: +5.32 ± 1.78%), BWT 0.00 ± 0.00% (diff vs FT: +9.62 ± 2.34%), NEW 94.30 ± 0.12% [LEAST FORGETTING]
+  - ewc (lambda=20): ACC 93.76 ± 0.36% (diff vs FT: +4.78 ± 1.69%), BWT -2.34 ± 0.55% (diff vs FT: +7.28 ± 2.07%), NEW 95.63 ± 0.21%
+  - gate:magnitude (beta=1.0, decay=1.0): ACC 91.43 ± 0.86% (diff vs FT: +2.46 ± 1.73%), BWT -4.39 ± 1.01% (diff vs FT: +5.23 ± 2.23%), NEW 94.94 ± 0.06%
+  - finetune: ACC 88.97 ± 1.85%, BWT -9.62 ± 2.34%, NEW 96.67 ± 0.12%
+  - gate:layer_cos (beta=1.0, decay=1.0): ACC 89.00 ± 2.32% (diff vs FT: +0.02 ± 0.86%), BWT -9.62 ± 2.98% (diff vs FT: -0.00 ± 1.07%), NEW 96.69 ± 0.12% (statistical tie with FT)
+  - gate:conflict (beta=0.25, decay=1.0): ACC 81.73 ± 1.41% (diff vs FT: -7.24 ± 1.38%), BWT -17.60 ± 1.84% (diff vs FT: -7.98 ± 1.67%), NEW 95.81 ± 0.10%
+- problems / decisions: [MEASURED] Under honest evaluation on held-out test permutations:
+  1. The directional conflict gate actively impairs continual learning: gate:conflict is -7.24 ± 1.38% worse than plain fine-tuning on ACC and forgets almost twice as much (-17.60% vs -9.62% BWT).
+  2. The magnitude gate genuinely mitigates forgetting without data buffers: +2.46 ± 1.73% ACC over fine-tuning, cutting forgetting in half (-4.39% vs -9.62% BWT).
+  3. Repaired EWC (lambda=20) is strong (+4.78 ± 1.69% ACC over FT), trailing only replay and LoRA.
+- next: Task 2.1
