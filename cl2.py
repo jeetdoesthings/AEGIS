@@ -162,11 +162,19 @@ def train_task(model, opt, Xp, y, args, kind, st, gate):
             if kind == "replay" and st["bx"] is not None:
                 j = torch.randint(0, st["bx"].size(0), (args.bs,), device=dev)
                 loss = loss + F.cross_entropy(model(st["bx"][j]), st["by"][j])
+
+            # Divergence guard: stop immediately if loss is not finite
+            if not torch.isfinite(loss):
+                return False
+
             opt.zero_grad()
             loss.backward()
+            if getattr(args, "clip", 0.0) > 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
             if gate is not None:
                 gate.apply(model)
             opt.step()
+    return True
 
 
 def run(method, args, seed, data):
@@ -199,7 +207,17 @@ def run(method, args, seed, data):
             gate.begin_task(model)
         params = [q for q in model.parameters() if q.requires_grad]
         opt = torch.optim.SGD(params, lr=args.lr)
-        train_task(model, opt, Xp, ytr, args, kind, st, gate)
+        success = train_task(model, opt, Xp, ytr, args, kind, st, gate)
+        if not success:
+            return {
+                "diverged": True,
+                "diverged_task": t + 1,
+                "ACC": None,
+                "BWT": None,
+                "FWT": None,
+                "NEW": None,
+                "R": None,
+            }
         if gate is not None:
             gate.end_task(model)
         if kind == "ewc":
@@ -215,10 +233,11 @@ def run(method, args, seed, data):
     R = np.array(R)
     T = args.tasks
     return {
-        "ACC": R[-1].mean(),
-        "BWT": np.mean([R[-1, j] - R[j, j] for j in range(T - 1)]),
-        "FWT": np.mean([R[j - 1, j] - base[j] for j in range(1, T)]),
-        "NEW": np.mean(np.diag(R)),
+        "diverged": False,
+        "ACC": float(R[-1].mean()),
+        "BWT": float(np.mean([R[-1, j] - R[j, j] for j in range(T - 1)])),
+        "FWT": float(np.mean([R[j - 1, j] - base[j] for j in range(1, T)])),
+        "NEW": float(np.mean(np.diag(R))),
         "R": R.tolist(),
     }
 
@@ -235,6 +254,7 @@ def main():
     ap.add_argument("--seed_start", type=int, default=0)
     ap.add_argument("--eval_split", choices=["val", "test"], default="test")
     ap.add_argument("--out", type=str, default="")
+    ap.add_argument("--clip", type=float, default=0.0, help="Gradient norm clipping max_norm (0.0=disabled)")
     ap.add_argument("--ewc_lambda", type=float, default=5000)
     ap.add_argument("--buf", type=int, default=200)
     ap.add_argument("--beta", type=float, default=1.0)
@@ -250,11 +270,14 @@ def main():
 
     print(f"\n{'method':<22}{'ACC':>14}{'BWT':>14}{'FWT':>14}{'NEW':>14}")
     for m, rs in results.items():
-        cells = []
-        for k in ("ACC", "BWT", "FWT", "NEW"):
-            v = np.array([r[k] for r in rs]) * 100
-            cells.append(f"{v.mean():6.1f}+-{v.std():4.1f}")
-        print(f"{m:<22}" + "".join(f"{c:>14}" for c in cells))
+        if any(r.get("diverged", False) for r in rs):
+            print(f"{m:<22}{'DIVERGED':>14}{'--':>14}{'--':>14}{'--':>14}")
+        else:
+            cells = []
+            for k in ("ACC", "BWT", "FWT", "NEW"):
+                v = np.array([r[k] for r in rs]) * 100
+                cells.append(f"{v.mean():6.1f}+-{v.std():4.1f}")
+            print(f"{m:<22}" + "".join(f"{c:>14}" for c in cells))
 
     # Path handling for outputs and configs
     if args.out:
@@ -290,12 +313,15 @@ def main():
     import matplotlib.pyplot as plt
     plt.figure(figsize=(6, 4))
     for m, rs in results.items():
+        if any(r.get("diverged", False) for r in rs):
+            continue
         curve = np.mean([np.array(r["R"])[:, 0] for r in rs], axis=0) * 100
         plt.plot(range(1, args.tasks + 1), curve, marker="o", label=m)
     plt.xlabel("tasks learned so far")
     plt.ylabel("accuracy on task 1 (%)")
     plt.title("Forgetting curve")
-    plt.legend(fontsize=7)
+    if plt.gca().get_legend_handles_labels()[0]:
+        plt.legend(fontsize=7)
     plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(curve_path, dpi=200)

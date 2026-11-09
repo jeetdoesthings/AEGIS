@@ -1,0 +1,26 @@
+{
+  "methods": [
+    "ewc"
+  ],
+  "tasks": 5,
+  "epochs": 3,
+  "lr": 0.05,
+  "bs": 128,
+  "seeds": 3,
+  "seed_start": 0,
+  "eval_split": "val",
+  "out": "phase1/ewc_val_lam5",
+  "clip": 0.0,
+  "ewc_lambda": 5.0,
+  "buf": 200,
+  "beta": 1.0,
+  "decay": 1.0,
+  "git_commit": "2ec680ef9f296b09177c105505134eace60480b1",
+  "torch_version": "2.8.0",
+  "device": "cpu",
+  "seeds_evaluated": [
+    0,
+    1,
+    2
+  ]
+}

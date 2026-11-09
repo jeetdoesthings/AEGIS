@@ -1,0 +1,18 @@
+=== EWC DIAGNOSIS: lambda=5000 ===
+Training Task 0...
+Task 0 complete. Fisher matrix calculated.
+
+Starting Task 1 (Second Task) step-by-step training:
+Step    1 (Ep 1): CE=3.0230e+00, EWC=0.0000e+00, Tot=3.0230e+00, Finite=True
+Step    2 (Ep 1): CE=2.1506e+00, EWC=2.7665e-01, Tot=2.4272e+00, Finite=True
+Step    3 (Ep 1): CE=1.9292e+00, EWC=7.5244e+00, Tot=9.4536e+00, Finite=True
+Step    4 (Ep 1): CE=2.1362e+00, EWC=1.6205e+03, Tot=1.6227e+03, Finite=True
+Step    5 (Ep 1): CE=7.0018e+00, EWC=5.9051e+05, Tot=5.9051e+05, Finite=True
+Step    6 (Ep 1): CE=4.9189e+01, EWC=3.0592e+08, Tot=3.0592e+08, Finite=True
+Step    7 (Ep 1): CE=6.4792e+03, EWC=1.9477e+11, Tot=1.9477e+11, Finite=True
+Step    8 (Ep 1): CE=3.6340e+05, EWC=1.3790e+14, Tot=1.3790e+14, Finite=True
+Step    9 (Ep 1): CE=5.4285e+12, EWC=1.0337e+17, Tot=1.0337e+17, Finite=True
+Step   10 (Ep 1): CE=6.4808e+11, EWC=8.0201e+19, Tot=8.0201e+19, Finite=True
+Step   13 (Ep 1): CE=nan, EWC=inf, Tot=nan, Finite=False
+
+[DIVERGENCE CONFIRMED] Non-finite loss at step 13!
