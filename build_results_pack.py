@@ -25,8 +25,8 @@ METHOD_NAMES_PRETTY = {
     "gate:conflict": "Gate: Conflict (original, β=0.25)",
     "gate:magnitude": "Gate: Magnitude (ablation, β=1.0)",
     "gate:layer_cos": "Gate: Layer Cosine (β=0.5/1.0)",
-    "gate:drift": "Gate: Drift (anti-ratchet, c=0.1)",
-    "gate:hybrid": "Gate: Hybrid (conflict × mag, c=0.1)",
+    "gate:drift": "Gate: Drift (anti-drift gate, β=0.1)",
+    "gate:hybrid": "Gate: Hybrid (conflict × mag, β=0.1)",
     "gate:conflict_soft": "Gate: Soft Conflict (β=0.1)",
 }
 

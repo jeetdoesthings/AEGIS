@@ -13,9 +13,9 @@ In this work, we tested whether a buffer-free **Gradient-Conflict Gate** could p
 
 Under an honest multi-seed benchmark on Permuted and Split-MNIST, our first discovery was a severe failure: on 10 sequential tasks, the original conflict gate collapsed to **41.9% accuracy**, falling **36% below plain fine-tuning**. 
 
-Using parameter telemetry, we proved why: blocking opposing updates creates an **asymmetric ratchet** that doubles weight norms and causes runaway drift. 
+Parameter telemetry supports this mechanism: blocking opposing updates creates an **asymmetric ratchet** that doubles weight norms and causes runaway drift. 
 
-By designing an anti-ratchet quadratic drift repair and a hybrid gate, we eliminated the runaway. On 10 tasks, our repaired gates reached **83.8% and 83.2% accuracy**, statistically outperforming plain fine-tuning by over **5%** without storing any historical samples. 
+By designing an anti-drift gate that limits expansion from starting weights alongside hybrid damping, we eliminated the runaway. On 10 tasks, our repaired gates reached **83.8% and 83.2% accuracy**, statistically outperforming plain fine-tuning by over **5%** without storing any historical samples. 
 
 Honest science turned a failed idea into a robust, working mechanism."
 

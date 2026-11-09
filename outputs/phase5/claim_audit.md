@@ -9,14 +9,17 @@ Every detected instance has been inspected against the raw experimental data fil
 
 ## 1. Audit Summary Table
 
-| Term Checked | Occurrences Found | Compliant / Supported | Rewritten / Resolved |
+| Term / Issue Checked | Occurrences Found | Compliant / Supported | Rewritten / Resolved |
 | :--- | :---: | :---: | :---: |
 | **novel / novelty** | 2 | 2 (Both explicitly disclaim novelty) | 0 |
 | **state-of-the-art / sota** | 0 | 0 | 0 |
-| **prove / proved / proves** | 0 | 0 | 0 |
+| **prove / proved / proves** | 4 | 0 (Banned from empirical claims) | 4 (Resolved to "supports" / "indicates" / "suggests") |
 | **solve / solved / solves** | 1 | 1 (Contextual usage: task objective) | 0 |
 | **beats** | 1 | 1 (Rule definition text only) | 0 |
 | **outperform / outperforming** | 6 | 5 (Supported by non-overlapping intervals) | 1 (Rewritten to note statistical tie) |
+| **Split-MNIST Explanation Label** | 2 | 1 (Correctly labeled in report.md) | 1 (Relabeled from MEASURED to HYPOTHESIS in summary texts) |
+| **gate:drift Mathematical Formulation** | 2 | 0 (Incorrectly described as loss penalty) | 2 (Corrected to exact gradient gate condition from `cl2.py`) |
+| **Phase 4 Milestone Status** | 2 | 0 (Incorrectly implied completed) | 2 (Clarified as skipped per go/no-go rule; Future Work) |
 
 ---
 
@@ -94,5 +97,59 @@ Every detected instance has been inspected against the raw experimental data fil
 
 ---
 
+### Hit 8: "proved" in Presentation Script
+- **Location**: [`outputs/phase5/script_60s.md:16`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/script_60s.md#L16)
+- **Original Draft**: *"Using parameter telemetry, we proved why: blocking opposing updates creates an asymmetric ratchet..."*
+- **Audit Assessment**: **VIOLATION OF BANNED TERM RULE**. The plan explicitly bans "prove" for empirical observations. Logging step patterns and observing that drift repair helps provides strong supporting evidence, but does not constitute formal mathematical proof.
+- **Resolution**: **REWRITTEN** to:
+  *"Parameter telemetry supports this mechanism: blocking opposing updates creates an asymmetric ratchet that doubles weight norms and causes runaway drift."*
+
+---
+
+### Hit 9: "prove" in Viva Q&A
+- **Location**: [`outputs/phase5/qa.md:53`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/qa.md#L53)
+- **Original Draft**: *"### Q9: Did your magnitude gate beat the conflict gate? What does that prove?"*
+- **Audit Assessment**: **VIOLATION OF BANNED TERM RULE**.
+- **Resolution**: **REWRITTEN** to:
+  *"### Q9: Did your magnitude gate beat the conflict gate? What does that indicate?"*
+
+---
+
+### Hit 10: "proves" / "proving" in Historical Explanation Text
+- **Location**: [`outputs/results_explanation.md:138, 160`](file:///Users/jeet/Desktop/AEGIS/outputs/results_explanation.md#L138)
+- **Original Draft**: *"This proves that selectively damping weights... proving that the directional conflict check is the source of failure."*
+- **Audit Assessment**: **VIOLATION OF BANNED TERM RULE**.
+- **Resolution**: **REWRITTEN** to:
+  *"This suggests that selectively damping weights... indicating that the directional conflict check is the source of failure."*
+
+---
+
+### Hit 11: Split-MNIST Shared-Head Explanation Labeling
+- **Location**: [`README.md`](file:///Users/jeet/Desktop/AEGIS/README.md), [`outputs/phase5/report.md:195`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/report.md#L195), and summary texts.
+- **Original Text**: Marked the explanation that "shared-head binary logits overwrite each other" as `[MEASURED]`.
+- **Audit Assessment**: **MISLABELED CLAIM**. The measured data only shows that fine-tuning, EWC, and all gate variants tie between $61.90\%$ and $63.96\%$ ACC on Split-MNIST. Attributing this collapse to output head logit overwrite versus hidden layer representation collapse is a reasoned hypothesis, not directly isolated by the metric.
+- **Resolution**: **CORRECTED**. The empirical tie is tagged `[MEASURED]`, while the causal explanation is strictly tagged `[HYPOTHESIS]`.
+
+---
+
+### Hit 12: gate:drift Implementation & Characterization
+- **Location**: [`outputs/phase5/report.md:78-81`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/report.md#L78), [`outputs/phase5/report.md:227`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/report.md#L227), [`outputs/phase5/poster_text.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/poster_text.md).
+- **Original Text**: Characterized `gate:drift` as adding an explicit quadratic loss penalty: $\mathcal{L}_{drift}(\theta) = \mathcal{L}_{task}(\theta) + \frac{c}{2}\|\theta - \theta^*\|_2^2$.
+- **Audit Assessment**: **INACCURATE FORMULATION**. If an algorithm adds an explicit quadratic penalty to the loss function, it is an L2-SP or EWC regularizer, not a gate. Reading `cl2.py` reveals that `gate:drift` is implemented entirely in `apply(model)` at the gradient level:
+  $$\text{cond} = (g \odot d > 0) \lor (g \odot e < 0), \quad e = \theta - \theta_{start}$$
+  $$g \leftarrow g \odot (1 - \beta \cdot \text{mag} \cdot \mathbf{1}_{\text{cond}})$$
+  It acts as a gradient-domain brake against steps that increase distance from starting weights $\theta_{start}$ ($g \cdot e < 0$).
+- **Resolution**: **CORRECTED**. Replaced all references to additive loss penalties with the exact dual-condition gradient damping equation from `cl2.py`, and added an explanation connecting its functional behavior to L2-SP and EWC anchor regularization.
+
+---
+
+### Hit 13: Phase 4 Milestone Status
+- **Location**: Project summaries and [`STATUS.md`](file:///Users/jeet/Desktop/AEGIS/STATUS.md).
+- **Original Text**: "Every milestone in AGENT_PLAN.md has been executed."
+- **Audit Assessment**: **INACCURATE CLAIM**. Phase 4 (GPT-2 language model experiment across 4 domains) was deliberately skipped under the go/no-go gate rule because execution was on local CPU hardware (where training a 124M transformer across 8,000 steps is computationally intractable).
+- **Resolution**: **CORRECTED**. Text now explicitly states: Phases 0, 1, 2, 3, and 5 were executed and completed. Phase 4 was skipped per the go/no-go decision rule and is documented strictly as **Future Work**.
+
+---
+
 ## 3. Final Certification
-All claims in the report, table captions, and presentation materials have been fully audited against the generated results. No claims of novelty, unverified superiority, or speculative breakthroughs remain.
+All claims in the report, table captions, poster text, viva Q&A, and documentation have been audited and corrected. No banned terms ("prove", "proves", "proven"), unverified assertions, misattributed loss formulas, or overstated milestone claims remain.

@@ -4,7 +4,7 @@ This document provides a complete empirical evaluation of the continual learning
 
 All statements below are strictly classified under two labels:
 - **`[MEASURED]`**: Directly extracted from empirical JSON log files.
-- **`[LIKELY EXPLANATION]`**: A reasoned scientific hypothesis explaining the observed dynamics, not formally proven by this experiment.
+- **`[LIKELY EXPLANATION]`**: A reasoned scientific hypothesis explaining the observed dynamics, not formally verified by this experiment.
 
 ---
 
@@ -135,7 +135,7 @@ Tracking accuracy on Task 1 over the course of sequential learning ($R[:, 0]$) h
 `[MEASURED]` Plain finetuning suffered substantial degradation, dropping 15.00% on Task 1 down to 81.14% ± 6.59%.  
 `[MEASURED]` Our proposed method, gate:conflict, underperformed significantly at full penalty (15.89% ± 0.41% ACC), though relaxing the gating coefficient to beta=0.5 improved accuracy to 44.93% ± 2.48%.  
 `[MEASURED]` Crucially, our ablation model, gate:magnitude, achieved 92.36% ± 0.32% ACC and restricted Task 1 forgetting to 5.11%.  
-`[LIKELY EXPLANATION]` This proves that selectively damping weights by past displacement magnitude is highly effective, whereas enforcing an elementwise directional conflict check over-restricts gradient updates.
+`[LIKELY EXPLANATION]` This suggests that selectively damping weights by past displacement magnitude is highly effective, whereas enforcing an elementwise directional conflict check over-restricts gradient updates.
 
 ---
 
@@ -157,7 +157,7 @@ Tracking accuracy on Task 1 over the course of sequential learning ($R[:, 0]$) h
 
 **Question 4: What is the main finding from comparing gate:conflict against gate:magnitude?**  
 `[MEASURED]` Gate:magnitude:1.0 achieved 92.36% ± 0.32% ACC and -3.65% ± 0.39% BWT, outperforming gate:conflict:1.0 (15.89% ± 0.41% ACC, -51.69% ± 12.17% BWT) by 76.47% ACC.  
-`[LIKELY EXPLANATION]` Magnitude-based damping preserves critical parameters while preserving directional freedom, proving that the directional conflict check is the source of failure.
+`[LIKELY EXPLANATION]` Magnitude-based damping preserves critical parameters while preserving directional freedom, indicating that the directional conflict check is the source of failure.
 
 **Question 5: Can your gate replace experience replay in practical memory-constrained applications?**  
 `[MEASURED]` Current results do not support replacing replay with the gate; replay achieved 95.19% ± 0.09% ACC and -2.22% ± 0.07% BWT, outperforming all gate variants.  

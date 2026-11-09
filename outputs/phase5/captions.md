@@ -18,7 +18,7 @@ This document contains standardized, publication-ready captions for every visual
 
 ### Table 3: Split-MNIST Domain-Incremental 5-Task Quantitative Evaluation
 - **Files**: [`outputs/phase5/table_split.csv`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/table_split.csv), [`outputs/phase5/table_split.png`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/table_split.png)
-- **Caption**: *Table 3: Continual learning performance on domain-incremental Split-MNIST (5 sequential binary classification tasks on digits 0-9 sharing a 2-way output head) across 5 test seeds (100-104) on the held-out test split. Values reported as mean ± std. In this setting, all buffer-free weight regularization and gating methods collapse into a statistical tie around 62% ACC due to severe head interference, while exemplar replay (96.85 ± 0.30%) and parameter-isolated LoRA (98.73 ± 0.06%) maintain high performance.*
+- **Caption**: *Table 3: Continual learning performance on domain-incremental Split-MNIST (5 sequential binary classification tasks on digits 0-9 sharing a 2-way output head) across 5 test seeds (100-104) on the held-out test split. Values reported as mean ± std. In this setting, all buffer-free weight regularization and gating methods collapse into a statistical tie around 62% ACC (hypothesized to stem from shared-head binary logit interference), while exemplar replay (96.85 ± 0.30%) and parameter-isolated LoRA (98.73 ± 0.06%) maintain high performance.*
 
 ---
 

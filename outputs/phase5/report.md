@@ -13,8 +13,8 @@ Continual learning in artificial neural networks remains bottlenecked by catastr
 
 Through an academically rigorous experimental framework comprising isolated train/validation/test splits, equal hyperparameter tuning budgets, and multi-seed evaluations across Permuted-MNIST (5 and 10 tasks) and domain-incremental Split-MNIST, we establish three primary empirical findings:
 1. `[MEASURED]` The original directional conflict gate (`gate:conflict`) fails catastrophically: on 5-task Permuted-MNIST, it degrades accuracy relative to plain fine-tuning by $-7.24 \pm 1.38\%$ ($81.73 \pm 1.41\%$ vs $88.97 \pm 1.85\%$), and on 10 tasks, accuracy collapses to $41.92 \pm 1.71\%$ (a $-36.29 \pm 2.82\%$ drop vs fine-tuning's $78.21 \pm 1.68\%$).
-2. `[MEASURED]` Step-level parameter diagnostics confirm the *asymmetric ratchet hypothesis*: selectively zeroing updates that oppose $d$ ($g \cdot d > 0$) while allowing updates aligned with $d$ to proceed unhindered causes weights to blow up unidirectionally (Task 5 $l1.weight$ L2 norm doubles to 22.700 vs 11.790 for fine-tuning) and run away along $d$ (+2.263 vs -0.145 for fine-tuning).
-3. `[MEASURED]` Two repaired variants—an anti-ratchet quadratic drift regularizer (`gate:drift`) and a multiplicative conflict-magnitude damper (`gate:hybrid`)—eliminate the runaway mechanism. On 5-task Permuted-MNIST, `gate:drift` achieves $91.89 \pm 1.03\%$ ACC ($+2.92 \pm 0.96\%$ over fine-tuning, non-overlapping intervals). On 10-task Permuted-MNIST, `gate:hybrid` and `gate:drift` achieve $83.82 \pm 0.54\%$ and $83.21 \pm 1.26\%$ ACC respectively, statistically outperforming plain fine-tuning ($78.21 \pm 1.68\%$) by over $+5\%$ ACC without storing any past data.
+2. `[MEASURED]` Step-level parameter diagnostics support the *asymmetric ratchet hypothesis*: selectively zeroing updates that oppose $d$ ($g \cdot d > 0$) while allowing updates aligned with $d$ to proceed unhindered causes weights to blow up unidirectionally (Task 5 $l1.weight$ L2 norm doubles to 22.700 vs 11.790 for fine-tuning) and run away along $d$ (+2.263 vs -0.145 for fine-tuning).
+3. `[MEASURED]` Two repaired variants—an anti-drift gradient gate (`gate:drift`, which checks distance expansion from task start weights) and a multiplicative conflict-magnitude damper (`gate:hybrid`)—eliminate the runaway mechanism. On 5-task Permuted-MNIST, `gate:drift` achieves $91.89 \pm 1.03\%$ ACC ($+2.92 \pm 0.96\%$ over fine-tuning, non-overlapping intervals). On 10-task Permuted-MNIST, `gate:hybrid` and `gate:drift` achieve $83.82 \pm 0.54\%$ and $83.21 \pm 1.26\%$ ACC respectively, statistically outperforming plain fine-tuning ($78.21 \pm 1.68\%$) by over $+5\%$ ACC without storing any past data.
 
 ---
 
@@ -75,13 +75,15 @@ If $\cos(g_l, d_l) > 0$, the entire layer's gradient is scaled down: $g_l \lefta
 
 Diagnostic telemetry (Section 6) revealed that `gate:conflict` induces an asymmetric ratchet: zeroing updates when $g \cdot d > 0$ permits updates with $g \cdot d \le 0$ to proceed unhindered, allowing parameters to drift unboundedly away from their origin along $d$. To eliminate this instability, we formulated three repaired variants:
 
-1. **Anti-Ratchet Drift Regularizer (`gate:drift`)**:
-   Instead of hard gradient clipping, adds an elastic quadratic restoring force that penalizes cumulative displacement from the optimal multi-task reference $\theta^*$:
-   $$\mathcal{L}_{drift}(\theta) = \mathcal{L}_{task}(\theta) + \frac{c}{2} \|\theta - \theta^*\|_2^2$$
-   where $c \in \{0.01, 0.1, 0.5\}$. This actively counters the directional ratchet without requiring a diagonal Fisher calculation.
+1. **Anti-Drift Gradient Gate (`gate:drift`)**:
+   In continual learning literature, restricting drift away from reference weights is standardly achieved by adding an explicit quadratic loss penalty, as in L2-SP ($\frac{\alpha}{2}\|\theta - \theta_{ref}\|_2^2$) or EWC ($\frac{\lambda}{2}\sum F_i(\theta_i - \theta_i^*)^2$). In `cl2.py`, `gate:drift` operationalizes anchor stabilization directly at the gradient level without computing an explicit auxiliary loss. At the start of task $t$, reference weights are frozen as $s = \theta_{start}$. For current parameter displacement $e = \theta - s$, taking an SGD step $\Delta \theta = -\eta g$ expands the squared distance from the task anchor whenever $\Delta \theta \cdot e > 0 \iff g \cdot e < 0$. The gate tests whether an update either opposes historical movement $d$ or expands distance from the task anchor:
+   $$\text{cond} = (g \odot d > 0) \lor (g \odot e < 0)$$
+   $$g \leftarrow g \odot (1 - \beta \cdot \text{mag} \cdot \mathbf{1}_{\text{cond}})$$
+   where $\text{mag} = \text{clamp}\left(\frac{|d|}{\overline{|d|} + \epsilon}, \max=1.0\right)$. By braking updates that point away from $\theta_{start}$, `gate:drift` acts as a gradient-level anchor constraint analogous to a movement-weighted L2-SP barrier.
 2. **Multiplicative Hybrid Gate (`gate:hybrid`)**:
-   Combines soft directional conflict gating with magnitude-bounded damping and an explicit distance tether:
-   $$g_{gated} = g \odot \left(1 - \frac{|d|}{\|d\|_\infty + \epsilon} \cdot \mathbf{1}_{g \cdot d > 0}\right) + c (\theta - \theta^*)$$
+   Combines soft directional conflict gating with unconditional magnitude-proportional damping:
+   $$g \leftarrow g \odot (1 - \beta \cdot \text{mag} \cdot \mathbf{1}_{g \odot d > 0}) \odot (1 - \gamma \cdot \text{mag})$$
+   where $\beta$ controls directional conflict damping and $\gamma$ applies gentle, continuous dampening on heavily displaced parameters regardless of gradient direction.
 3. **Soft Conflict Gate (`gate:conflict_soft`)**:
    Retains directional conflict checking but restricts damping to a conservative regime ($\beta \in [0.05, 0.1]$), preventing the complete elimination of opposing gradients.
 
@@ -224,7 +226,7 @@ The original gate defined conflict as $g \cdot d > 0$ and applied $g \leftarrow 
 
 ### 6.2 Why Magnitude Gating and Drift Repairs Work
 - `gate:magnitude` measures only $|d|$ without regard to sign, avoiding any directional bias or asymmetric filtering.
-- `gate:drift` directly counters the ratchet by adding a quadratic restoring force ($c(\theta - \theta^*)$) that pulls inflated weights back toward the multi-task center. As measured in Table 1 and Table 2, this fully stabilizes training, outperforming fine-tuning by $+2.92\%$ on Perm5 and $+5.62\%$ on Perm10.
+- `gate:drift` directly counters the ratchet by checking the drift-expansion condition ($g \cdot e < 0$, where $e = \theta - \theta_{start}$). Whenever a proposed SGD step would increase parameter distance from the task start anchor, the gate damps the step, acting as a gradient-level barrier analogous to L2-SP / movement-weighted EWC without an explicit loss penalty. As measured in Table 1 and Table 2, this fully stabilizes training, statistically outperforming fine-tuning by $+2.92\%$ on Perm5 and $+5.62\%$ on Perm10.
 
 ### 6.3 Layer Gating Hierarchy
 Examining the proportion of gated weights per layer for `gate:drift:0.1` (`outputs/phase5/layer_heatmap_best_gate.png`) reveals an intuitive anatomical hierarchy:
@@ -245,7 +247,7 @@ Examining the proportion of gated weights per layer for `gate:drift:0.1` (`outpu
 
 ## 8. Future Work: Language Model Scaling (Phase 4 Specification)
 
-The foundational insights developed in this work provide a concrete blueprint for scaling parameter gating to autoregressive language models (Phase 4).
+In accordance with the project's go/no-go gate rule, Phase 4 (scaling to a 124M-parameter GPT-2 Small model across sequential text domains) was skipped during local execution due to CPU hardware constraints. Training an autoregressive transformer across 8,000 steps without GPU acceleration is computationally intractable. Consequently, Phase 4 is specified here as concrete **Future Work** to guide subsequent GPU-based investigations.
 
 ### 8.1 The Optimizer Interaction Problem
 In large language models, training standardly employs adaptive optimizers (Adam/AdamW). Adam computes running first ($m_t$) and second ($v_t$) moment estimates:

@@ -50,16 +50,18 @@ A negative $BWT$ indicates forgetting. In plain fine-tuning, $BWT$ drops from $-
 
 ---
 
-### Q9: Did your magnitude gate beat the conflict gate? What does that prove?
+### Q9: Did your magnitude gate beat the conflict gate? What does that indicate?
 **Answer:** `[MEASURED]` Yes, decisively. On Perm5, `gate:magnitude` achieved $91.43 \pm 0.86\%$ ACC vs $81.73 \pm 1.41\%$ for `gate:conflict` ($+9.70\%$ margin). On Perm10, `gate:magnitude` scored $83.13 \pm 1.22\%$ vs $41.92 \pm 1.71\%$ for `gate:conflict` ($+41.21\%$ margin).  
-`[HYPOTHESIS]` This demonstrates that checking the *sign* of $g \cdot d$ is actively harmful because it induces directional asymmetry. Dampening updates solely based on the *magnitude* of historical movement ($|d|$) provides effective regularization without the runaway ratchet.
+`[HYPOTHESIS]` This indicates that checking the *sign* of $g \cdot d$ is actively harmful because it induces directional asymmetry. Dampening updates solely based on the *magnitude* of historical movement ($|d|$) provides effective regularization without the runaway ratchet.
 
 ---
 
-### Q10: How do your repaired gates compare to plain fine-tuning? Do they statistically win?
+### Q10: How does gate:drift work in your code, and how do your repaired gates compare to fine-tuning?
 **Answer:**
-- On Perm5: `gate:drift` achieved $91.89 \pm 1.03\%$ ACC vs $88.97 \pm 1.85\%$ for fine-tuning. The intervals $[90.86, 92.92]$ and $[87.12, 90.82]$ do not overlap, so **`gate:drift` statistically outperforms fine-tuning by $+2.92 \pm 0.96\%$**.
-- On Perm10: `gate:hybrid` achieved $83.82 \pm 0.54\%$ and `gate:drift` achieved $83.21 \pm 1.26\%$ ACC vs $78.21 \pm 1.68\%$ for fine-tuning. Both intervals ($[83.28, 84.36]$ and $[81.95, 84.47]$) are completely disjoint from fine-tuning's $[76.53, 79.89]$, **statistically outperforming fine-tuning by $>+5\%$ ACC**.
+- **Mechanism in Code (`cl2.py`)**: `gate:drift` is an anti-drift gradient gate, not an additive loss penalty. At each step, it computes $e = \theta - \theta_{start}$ and checks $\text{cond} = (g \cdot d > 0) \lor (g \cdot e < 0)$. If an update moves parameters further from the task starting anchor ($g \cdot e < 0$) or opposes historical displacement ($g \cdot d > 0$), it damps the gradient by $1 - \beta \cdot \text{mag} \cdot \text{cond}$. In the continual learning literature, penalizing movement away from starting weights is standardly done via additive quadratic loss penalties (L2-SP or EWC). Here, `gate:drift` enforces that anchor proximity directly in the gradient domain without an explicit loss penalty.
+- **Empirical Results vs Fine-Tuning**:
+  - On Perm5: `gate:drift` achieved $91.89 \pm 1.03\%$ ACC vs $88.97 \pm 1.85\%$ for fine-tuning. The intervals $[90.86, 92.92]$ and $[87.12, 90.82]$ do not overlap, so **`gate:drift` statistically outperforms fine-tuning by $+2.92 \pm 0.96\%$**.
+  - On Perm10: `gate:hybrid` achieved $83.82 \pm 0.54\%$ and `gate:drift` achieved $83.21 \pm 1.26\%$ ACC vs $78.21 \pm 1.68\%$ for fine-tuning. Both intervals ($[83.28, 84.36]$ and $[81.95, 84.47]$) are completely disjoint from fine-tuning's $[76.53, 79.89]$, **statistically outperforming fine-tuning by $>+5\%$ ACC**.
 
 ---
 
@@ -90,6 +92,6 @@ A negative $BWT$ indicates forgetting. In plain fine-tuning, $BWT$ drops from $-
 
 ---
 
-### Q15: What is the immediate next step, and how would you scale this to modern Language Models?
-**Answer:** The immediate next step is Phase 4: scaling to autoregressive language models (GPT-2 Small, 124M) across 4 domains (WikiText-103, Code, PubMed, News).  
-Crucially, standard gradient gating fails under Adam because coordinate-wise normalization ($\sqrt{v_t}$) cancels gradient dampening. We formulated **`GatedAdam`**, which applies gating directly to the final Adam update step ($u_t = \hat{m}_t / (\sqrt{\hat{v}_t} + \epsilon)$) before subtracting from parameters ($p \leftarrow p - \eta u_{gated}$). This preserves the optimizer's moment tracking while enforcing drift protection.
+### Q15: What is the status of Phase 4, and how would you scale this to modern Language Models?
+**Answer:** Phase 4 (evaluating a 124M-parameter GPT-2 Small across 4 sequential text domains) was **skipped per the plan's go/no-go decision rule**, which mandates skipping Phase 4 when running on local CPU without dedicated GPU compute. Running a 124M transformer on CPU across 8,000 optimization steps is computationally intractable. Consequently, Phase 4 is presented strictly as **Future Work**.  
+For that future implementation, standard gradient gating would fail under Adam because coordinate-wise second-moment normalization ($\sqrt{v_t}$) rescales damped gradients back up. We designed **`GatedAdam`**, which applies gating directly to the final Adam update vector ($u_t = \hat{m}_t / (\sqrt{\hat{v}_t} + \epsilon)$) before parameter subtraction ($p \leftarrow p - \eta u_{gated}$). This preserves the optimizer's moment tracking while enforcing drift protection.
