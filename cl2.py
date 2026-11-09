@@ -187,7 +187,7 @@ def run(method, args, seed, data):
 
     perms = make_perms(args.tasks, seed)
     Xtes = [Xte[:, p] for p in perms]
-    model = MLP(n_tasks=args.tasks, lora=(kind == "lora")).to(dev)
+    model = MLP(n_tasks=args.tasks, r=getattr(args, "r", 8), lora=(kind == "lora")).to(dev)
     base = evaluate(model, Xtes, yte, kind)  # untrained reference for FWT
     gate = Gate(model, mode, beta, args.decay) if kind == "gate" else None
     st = {"F": None, "star": None, "bx": None, "by": None}
@@ -257,6 +257,7 @@ def main():
     ap.add_argument("--clip", type=float, default=0.0, help="Gradient norm clipping max_norm (0.0=disabled)")
     ap.add_argument("--ewc_lambda", type=float, default=5000)
     ap.add_argument("--buf", type=int, default=200)
+    ap.add_argument("--r", type=int, default=8, help="LoRA rank")
     ap.add_argument("--beta", type=float, default=1.0)
     ap.add_argument("--decay", type=float, default=1.0)
     args = ap.parse_args()

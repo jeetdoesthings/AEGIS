@@ -1,0 +1,27 @@
+{
+  "methods": [
+    "replay"
+  ],
+  "tasks": 5,
+  "epochs": 3,
+  "lr": 0.05,
+  "bs": 128,
+  "seeds": 3,
+  "seed_start": 0,
+  "eval_split": "val",
+  "out": "phase1/tune_replay_buf50",
+  "clip": 0.0,
+  "ewc_lambda": 5000,
+  "buf": 50,
+  "r": 8,
+  "beta": 1.0,
+  "decay": 1.0,
+  "git_commit": "c5fb29bed98fdc5d597db064b0c9fc8ad9ad32ba",
+  "torch_version": "2.8.0",
+  "device": "cpu",
+  "seeds_evaluated": [
+    0,
+    1,
+    2
+  ]
+}
