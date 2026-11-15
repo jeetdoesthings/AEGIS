@@ -66,10 +66,16 @@ The project was conducted in five sequential, rigorously documented stages:
 | **LoRA ($r=16/8$, oracle ID)\*** | Architecture | $94.30 \pm 0.12$ | $94.05 \pm 0.05$ | $\mathbf{98.73 \pm 0.06}$ | Zero backward forgetting ($0.0\%$ BWT); requires test-time task ID. |
 | **Gate: Conflict (original, $\beta=0.25$)** | Original Gate | $81.73 \pm 1.41$ | $41.92 \pm 1.71$ | $62.28 \pm 0.98$ | Catastrophic failure ($-36.3\%$ on Perm10); ratchet runaway. |
 | **Gate: Magnitude (ablation, $\beta=1.0$)** | Ablation | $91.43 \pm 0.86$ | $83.13 \pm 1.22$ | $61.90 \pm 0.36$ | Beats conflict gate by $+41\%$ on Perm10; magnitude alone works. |
-| **Gate: Drift (anti-drift, $\beta=0.1$)** | Repaired Gate | $91.89 \pm 1.03$ | $83.21 \pm 1.26$ | $62.62 \pm 1.03$ | Statistically beats fine-tuning by $+5.0\%$ on Perm10 without buffers. |
-| **Gate: Hybrid (conflict×mag, $\beta=0.1$)** | Repaired Gate | $90.98 \pm 0.90$ | $83.82 \pm 0.54$ | $62.78 \pm 0.56$ | Statistically beats fine-tuning by $+5.6\%$ on Perm10 without buffers. |
+| **Gate: Drift (anti-drift, $\beta=0.1$)** | Repaired Gate | $91.89 \pm 1.03$ | $83.21 \pm 1.26$ | $62.62 \pm 1.03$ | Statistically beats fine-tuning by about 5 points ($+5.0\%$) on Perm10 without buffers. |
+| **Gate: Hybrid (conflict×mag, $\beta=0.1$)** | Repaired Gate | $90.98 \pm 0.90$ | $83.82 \pm 0.54$ | $62.78 \pm 0.56$ | Statistically beats fine-tuning by about 5 points ($+5.6\%$) on Perm10 without buffers. |
 
 *\*LoRA requires an oracle task ID at test time to route representations to task-specific adapters.*
+
+> [!IMPORTANT]
+> **Honest Comparative Framing & Performance Boundaries:**
+> - **Repaired EWC Outperforms Every Gate:** Repaired EWC (Perm10 ACC $90.22 \pm 0.87\%$) outperforms every gate variant ($83.13–83.82\%$) by over 6.4 percentage points. The gate does not compete with EWC on retention.
+> - **Gate Variants Beat Fine-Tuning by ~5 Points:** On 10 tasks, `gate:hybrid` ($83.82\%$) and `gate:drift` ($83.21\%$) statistically outperform plain fine-tuning ($78.21\%$) by about 5 points without memory buffers.
+> - **Split-MNIST Buffer-Free Ceiling (62–64%):** On domain-incremental Split-MNIST, no method without replay ($96.85\%$) or task routing (LoRA: $98.73\%$) beats $62–64\%$ ACC. Fine-tuning ($62.07\%$), EWC ($63.96\%$), and all gates ($61.90–62.78\%$) form an inseparable statistical tie due to shared-head binary logit overwrite.
 
 ---
 

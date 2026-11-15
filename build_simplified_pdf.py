@@ -246,13 +246,13 @@ def build_pdf(filename="outputs/AEGIS_Simplified_Project_Overview.pdf"):
     res_data = [
         ["Method", "Category", "Perm5 ACC (%)", "Perm10 ACC (%)", "Split ACC (%)", "Key Finding / Takeaway"],
         ["Fine-Tuning (Plain SGD)", "Baseline", "88.97 ± 1.85", "78.21 ± 1.68", "62.07 ± 1.00", "Reference baseline. Forgetting doubles on 10 tasks (-20.8% BWT)."],
-        ["EWC (repaired, λ=20/100)", "Regularizer", "93.76 ± 0.36", "90.22 ± 0.87", "63.96 ± 1.39", "Strong on permutations (+12.0% on Perm10); ties on Split-MNIST."],
+        ["EWC (repaired, λ=20/100)", "Regularizer", "93.76 ± 0.36", "90.22 ± 0.87", "63.96 ± 1.39", "Outperforms all gates (+6.4% on Perm10); strong on permutations; ties on Split."],
         ["Replay (buffer=1000)", "Exemplar Buffer", "95.85 ± 0.11", "95.22 ± 0.09", "96.85 ± 0.30", "Top overall accuracy on all benchmarks; stores 1,000 raw samples."],
         ["LoRA (r=16/8, oracle ID)*", "Architecture", "94.30 ± 0.12", "94.05 ± 0.05", "98.73 ± 0.06", "Zero backward forgetting (0.0% BWT); requires test-time task ID."],
         ["Gate: Conflict (original, β=0.25)", "Original Gate", "81.73 ± 1.41", "41.92 ± 1.71", "62.28 ± 0.98", "Catastrophic failure (-36.3% on Perm10); ratchet runaway."],
         ["Gate: Magnitude (ablation, β=1.0)", "Ablation", "91.43 ± 0.86", "83.13 ± 1.22", "61.90 ± 0.36", "Beats conflict gate by +41% on Perm10; magnitude alone works."],
-        ["Gate: Drift (anti-drift, β=0.1)", "Repaired Gate", "91.89 ± 1.03", "83.21 ± 1.26", "62.62 ± 1.03", "Statistically beats fine-tuning by +5.0% on Perm10 without buffers."],
-        ["Gate: Hybrid (conflict×mag, β=0.1)", "Repaired Gate", "90.98 ± 0.90", "83.82 ± 0.54", "62.78 ± 0.56", "Statistically beats fine-tuning by +5.6% on Perm10 without buffers."]
+        ["Gate: Drift (anti-drift, β=0.1)", "Repaired Gate", "91.89 ± 1.03", "83.21 ± 1.26", "62.62 ± 1.03", "Statistically beats fine-tuning by ~5.0% on Perm10 without buffers."],
+        ["Gate: Hybrid (conflict×mag, β=0.1)", "Repaired Gate", "90.98 ± 0.90", "83.82 ± 0.54", "62.78 ± 0.56", "Statistically beats fine-tuning by ~5.6% on Perm10 without buffers."]
     ]
     t_res = Table(res_data, colWidths=[120, 75, 70, 70, 65, 140])
     t_res.setStyle(TableStyle([
@@ -276,8 +276,17 @@ def build_pdf(filename="outputs/AEGIS_Simplified_Project_Overview.pdf"):
 
     # Embed Visual Chart
     if os.path.exists("outputs/phase5/forgetting_curve_perm10_all.png"):
-        story.append(Image("outputs/phase5/forgetting_curve_perm10_all.png", width=520, height=265))
+        story.append(Image("outputs/phase5/forgetting_curve_perm10_all.png", width=500, height=215))
         story.append(Paragraph("Figure 1: Task 1 accuracy retention across 10 sequential tasks on Permuted-MNIST (5 seeds: 100–104). Notice that original gate:conflict collapses to 13.4%, while repaired gate:drift and gate:hybrid maintain >52% retention, outperforming fine-tuning.", caption_style))
+
+    # Honest Comparative Framing Card
+    honest_card = (
+        "<b>Rigorous Empirical & Honest Comparative Framing:</b><br/>"
+        "• <b>Repaired EWC Outperforms Every Gate:</b> Repaired EWC (Perm10 ACC 90.22 ± 0.87%) outperforms every gate variant (83.13–83.82%) by over 6.4 percentage points. The gate is not competitive with EWC on retention.<br/>"
+        "• <b>Repaired Gates Beat Fine-Tuning by ~5 Points:</b> On 10 tasks, gate:hybrid (83.82%) and gate:drift (83.21%) statistically beat plain fine-tuning (78.21%) by about 5 points (+5.62% and +5.01%) without memory buffers.<br/>"
+        "• <b>Split-MNIST Buffer-Free Ceiling (62–64%):</b> On domain-incremental Split-MNIST, no method without replay (96.85%) or oracle task ID (LoRA: 98.73%) beats 62–64% ACC. Fine-tuning (62.07%), EWC (63.96%), and all gates (61.90–62.78%) form a mutual statistical tie due to shared-head logit overwrite."
+    )
+    story.append(create_card("HONEST METHOD COMPARISON & PERFORMANCE BOUNDARIES", honest_card, bg_color="#FFF5F5", border_color="#E53E3E", title_color="#9B2C2C"))
 
     story.append(PageBreak())
 
@@ -330,7 +339,7 @@ def build_pdf(filename="outputs/AEGIS_Simplified_Project_Overview.pdf"):
 
     final_quote = ("<b>Summary Takeaway:</b> Project AEGIS turned an initial prototype failure into a valuable scientific contribution: "
                    "by refusing to cherry-pick or hide negative results, we uncovered the mathematical failure mode of directional conflict gating (the ratchet effect), "
-                   "proved that magnitude gating outperforms direction checking, and engineered anti-drift repairs that statistically beat fine-tuning on long horizons without storing replay data.")
+                   "demonstrated that magnitude gating outperforms direction checking, and engineered anti-drift repairs that statistically beat fine-tuning on long horizons without storing replay data.")
     story.append(Paragraph(final_quote, body_style))
 
     # Build PDF
