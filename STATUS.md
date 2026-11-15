@@ -213,10 +213,10 @@
 - problems / decisions: Perfect cross-document alignment on the true comparative standing of the methods.
 
 ## Final Verification 6: Project Naming Consistency
-- status: pending user selection (options: "AEGIS" or "Selective Plasticity")
-- what changed: Formulated clarification question for the user to select the preferred single project name. Currently, documents consistently identify the project under AEGIS (Autonomous Evaluation of Gradient-Gated Continual Learning Systems) and its core mechanism as Selective Plasticity / Gradient Gating.
-- key numbers: 1 user choice required.
-- problems / decisions: Prompt user via `ask_question`.
+- status: done (user selected: "AEGIS")
+- what changed: Standardized single project name as "AEGIS" across all project deliverables, reports, posters, scripts, and documentation, with "Selective Plasticity / Gradient Gating" denoting the underlying mechanism.
+- key numbers: Standardized name: AEGIS.
+- problems / decisions: Confirmed by user.
 
 ## Final Verification 7: Clean-Clone Reproducibility Smoke Test
 - status: done
