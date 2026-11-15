@@ -128,7 +128,7 @@ To eliminate data leakage and ensure scientific validity, `cl2.py` established f
 
 1. **Strict 3-Way Partition:** MNIST's 60,000 images were split (seed 42) into **55,000 training** (isolated for training), **5,000 validation** (isolated for tuning), and **10,000 test** samples (evaluated exclusively for final reporting across 5 independent seeds).
 2. **Divergence Guard:** Added telemetry in `train_task` and `run` that halts diverged runs immediately upon detecting non-finite loss, recording `DIVERGED` rather than corrupting summary tables.
-3. **EWC Repair:** Swept $\lambda \in \{1, 5, 20, 100\}$ on validation split. Proved $\lambda=20$ is optimal ($93.66 \pm 0.73\%$ val ACC, $93.76 \pm 0.36\%$ test ACC) with zero NaNs.
+3. **EWC Repair:** Swept $\lambda \in \{1, 5, 20, 100\}$ on validation split. Showed $\lambda=20$ is optimal ($93.66 \pm 0.73\%$ val ACC, $93.76 \pm 0.36\%$ test ACC) with zero NaNs.
 4. **Fair Validation Hyperparameter Tuning:** All 7 methods evaluated across 25 configurations on validation split (seeds 0, 1, 2) under an equal budget ($\le 6$ configs per method). Best configurations locked into `configs/locked_perm5.json`.
 5. **Statistical Tie Rule:** Two methods tie if their `mean ± std` intervals overlap. Claims of "beating" or "outperforming" are permitted only when empirical distributions are strictly disjoint.
 
@@ -323,4 +323,4 @@ AEGIS/
 
 Project AEGIS has successfully transformed an intuitive but failing gradient gating prototype into an academically rigorous, mechanistically audited, and empirically verified continual learning contribution. 
 
-By refusing to cherry-pick or hide negative results, the project uncovered the **asymmetric ratchet mechanism**, proved why magnitude gating outperforms directional checks, and formulated **anti-drift repairs** that statistically beat plain fine-tuning on long task horizons without memory replay buffers. All code, data, tables, figures, and presentation artifacts are committed to GitHub and ready for formal evaluation.
+By refusing to cherry-pick or hide negative results, the project uncovered the **asymmetric ratchet mechanism**, demonstrated why magnitude gating outperforms directional checks, and formulated **anti-drift repairs** that statistically beat plain fine-tuning on long task horizons without memory replay buffers. All code, data, tables, figures, and presentation artifacts are committed to GitHub and ready for formal evaluation.

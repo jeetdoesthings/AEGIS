@@ -59,9 +59,11 @@ A negative $BWT$ indicates forgetting. In plain fine-tuning, $BWT$ drops from $-
 ### Q10: How does gate:drift work in your code, and how do your repaired gates compare to fine-tuning?
 **Answer:**
 - **Mechanism in Code (`cl2.py`)**: `gate:drift` is an anti-drift gradient gate, not an additive loss penalty. At each step, it computes $e = \theta - \theta_{start}$ and checks $\text{cond} = (g \cdot d > 0) \lor (g \cdot e < 0)$. If an update moves parameters further from the task starting anchor ($g \cdot e < 0$) or opposes historical displacement ($g \cdot d > 0$), it damps the gradient by $1 - \beta \cdot \text{mag} \cdot \text{cond}$. In the continual learning literature, penalizing movement away from starting weights is standardly done via additive quadratic loss penalties (L2-SP or EWC). Here, `gate:drift` enforces that anchor proximity directly in the gradient domain without an explicit loss penalty.
-- **Empirical Results vs Fine-Tuning**:
+- **Empirical Results vs Fine-Tuning & EWC**:
   - On Perm5: `gate:drift` achieved $91.89 \pm 1.03\%$ ACC vs $88.97 \pm 1.85\%$ for fine-tuning. The intervals $[90.86, 92.92]$ and $[87.12, 90.82]$ do not overlap, so **`gate:drift` statistically outperforms fine-tuning by $+2.92 \pm 0.96\%$**.
-  - On Perm10: `gate:hybrid` achieved $83.82 \pm 0.54\%$ and `gate:drift` achieved $83.21 \pm 1.26\%$ ACC vs $78.21 \pm 1.68\%$ for fine-tuning. Both intervals ($[83.28, 84.36]$ and $[81.95, 84.47]$) are completely disjoint from fine-tuning's $[76.53, 79.89]$, **statistically outperforming fine-tuning by $>+5\%$ ACC**.
+  - On Perm10: `gate:hybrid` achieved $83.82 \pm 0.54\%$ and `gate:drift` achieved $83.21 \pm 1.26\%$ ACC vs $78.21 \pm 1.68\%$ for fine-tuning, **statistically outperforming fine-tuning by about 5 points ($+5.62\%$ and $+5.01\%$)**.
+  - **Honest Framing vs EWC**: Repaired EWC achieves $90.22 \pm 0.87\%$ ACC, **outperforming every gate variant ($83.13–83.82\%$) by over 6.4 percentage points**. The gate variants do not compete with EWC on retention.
+  - On Split-MNIST: **No method without replay or task ID beats $62–64\%$ ACC** (fine-tuning $62.07\%$, gates $61.90–62.78\%$, EWC $63.96\%$, forming a mutual statistical tie).
 
 ---
 
@@ -73,7 +75,7 @@ A negative $BWT$ indicates forgetting. In plain fine-tuning, $BWT$ drops from $-
 
 ### Q12: Why did all buffer-free methods fail on Split-MNIST (~62% ACC)?
 **Answer:** ⚠️ **Flagged: Results do NOT support claiming any gate succeeds on Split-MNIST.**  
-`[MEASURED]` On Split-MNIST, fine-tuning, EWC, and all six gate variants collapsed into a mutual statistical tie between $61.90\%$ and $63.96\%$ ACC, suffering backward transfer between $-43.76\%$ and $-46.39\%$.  
+`[MEASURED]` On Split-MNIST, no method without replay or task ID beats $62–64\%$ ACC: fine-tuning ($62.07 \pm 1.00\%$), EWC ($63.96 \pm 1.39\%$), and all six gate variants ($61.90\%$ to $62.78\%$) collapsed into a mutual statistical tie between $61.90\%$ and $63.96\%$ ACC, suffering backward transfer between $-43.76\%$ and $-46.39\%$.  
 `[HYPOTHESIS]` Split-MNIST is domain-incremental with a shared 2-way output head. Learning task 2 (digits 2 and 3) directly overwrites the output weights assigned to binary logits 0 and 1. Protecting hidden representations cannot resolve representational collision at the output head without exemplar replay ($96.85\%$) or task routing (LoRA, $98.73\%$).
 
 ---

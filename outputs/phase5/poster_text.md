@@ -60,11 +60,13 @@
 2. **Magnitude Gating Succeeds Without Direction:**
    - The magnitude ablation completely ignores direction and damps weights based purely on $|d|$.
    - Result: Outperforms fine-tuning on Perm10 ($83.13\%$ vs $78.21\%$) and cuts backward forgetting from $-20.80\%$ to $-12.82\%$.
-3. **Anti-Ratchet Repairs Statistically Outperform Fine-Tuning:**
+3. **Anti-Ratchet Repairs Beat Fine-Tuning by ~5 Points:**
    - Restricting updates that expand distance from task starting weights (`gate:drift`, which checks $g \cdot e < 0$) or applying hybrid magnitude damping (`gate:hybrid`) halts weight runaway.
-   - On Perm10, `gate:hybrid` achieves $83.82 \pm 0.54\%$ and `gate:drift` achieves $83.21 \pm 1.26\%$ ACC, statistically outperforming plain fine-tuning ($78.21 \pm 1.68\%$) by $>+5\%$ without memory buffers.
-4. **The Output Head Bottleneck:**
-   - `[MEASURED]` On domain-incremental Split-MNIST, all buffer-free weight-space methods tie around $62\%$ ACC.
+   - On Perm10, `gate:hybrid` achieves $83.82 \pm 0.54\%$ and `gate:drift` achieves $83.21 \pm 1.26\%$ ACC, statistically outperforming plain fine-tuning ($78.21 \pm 1.68\%$) by about 5 points ($+5.62\%$ and $+5.01\%$) without memory buffers.
+4. **Honest Framing: Repaired EWC Outperforms Every Gate:**
+   - Repaired EWC (Perm10 ACC $90.22 \pm 0.87\%$) outperforms every gate variant ($83.13–83.82\%$) by over 6.4 percentage points. The gate variants beat fine-tuning by about 5 points, but the gate does not compete with EWC.
+5. **The Output Head Bottleneck:**
+   - `[MEASURED]` No method without replay or task ID beats $62–64\%$ on domain-incremental Split-MNIST (fine-tuning $62.07\%$, gates $61.90–62.78\%$, EWC $63.96\%$, all buffer-free methods forming a mutual statistical tie).
    - `[HYPOTHESIS]` Protecting hidden representations fails when output logits overwrite each other on a shared head. Exemplar replay ($96.85\%$) or task routing ($98.73\%$) is required.
 
 ---

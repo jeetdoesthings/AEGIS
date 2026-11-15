@@ -1,22 +1,24 @@
 # 60-Second Spoken Poster Script
 
-**Estimated Word Count:** 142 words  
-**Speaking Pace:** ~140 words/minute (approx. 60 seconds)  
+**Estimated Word Count:** 155 words  
+**Speaking Pace:** ~145 words/minute (approx. 60 seconds)  
 
 ---
 
 *(Begin speaking)*
 
-"Catastrophic forgetting is a major bottleneck in AI: train a network on new tasks, and it aggressively overwrites old knowledge. 
+"Catastrophic forgetting is a major bottleneck in AI: train a network sequentially, and it rapidly overwrites old knowledge. 
 
-In this work, we tested whether a buffer-free **Gradient-Conflict Gate** could protect past weights without storing data. 
+We evaluated whether a buffer-free **Gradient-Conflict Gate** could protect past weights without storing data. 
 
-Under an honest multi-seed benchmark on Permuted and Split-MNIST, our first discovery was a severe failure: on 10 sequential tasks, the original conflict gate collapsed to **41.9% accuracy**, falling **36% below plain fine-tuning**. 
+Our first discovery was an empirical failure: on 10 sequential tasks, the original conflict gate collapsed to **41.9% accuracy**, falling **36% below plain fine-tuning**. 
 
-Parameter telemetry supports this mechanism: blocking opposing updates creates an **asymmetric ratchet** that doubles weight norms and causes runaway drift. 
+Telemetry supports this mechanism: blocking opposing updates creates an **asymmetric ratchet** that doubles weight norms and causes runaway drift. 
 
-By designing an anti-drift gate that limits expansion from starting weights alongside hybrid damping, we eliminated the runaway. On 10 tasks, our repaired gates reached **83.8% and 83.2% accuracy**, statistically outperforming plain fine-tuning by over **5%** without storing any historical samples. 
+To fix this, we designed an anti-drift gate and hybrid damping. On 10 tasks, our repaired gates reached **83.1% to 83.8% accuracy**, beating fine-tuning by about **5 points**. 
 
-Honest science turned a failed idea into a robust, working mechanism."
+However, honest framing is essential: repaired EWC achieves **90.2%**, outperforming every gate variant by over six points—the gate does not compete with EWC. Furthermore, on Split-MNIST, no method without replay or task routing exceeds **62% to 64%**. 
+
+Honest benchmarking transformed an intuitive failure into clear, reproducible science."
 
 *(End speaking)*

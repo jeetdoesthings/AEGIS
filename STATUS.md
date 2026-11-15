@@ -167,3 +167,72 @@
 - key numbers: Smoke test runs in 10s with 0 errors.
 - problems / decisions: Project AEGIS is fully complete, self-contained, and defense-ready.
 
+## Final Verification 1: Phase 4 Status & Scope Audit
+- status: done (marked out of scope per go/no-go rule; documented as future work)
+- what changed: Inspected `lm/` and `outputs/phase4/` directories (both exist, contain 0 files). Verified against `AGENT_PLAN.md` line 199 ("Run Phase 4 on a GPU; do not run it on CPU. If not, skip to Phase 5 and describe Phase 4 as future work") and line 291 (cut priority 1). Local CPU hardware (MacBook M4) lacks GPU throughput to train 124M-parameter GPT-2 over 4 sequential domains within reasonable latency. Marked Phase 4 out of scope for local execution; fully specified experimental protocol, dataset pipeline, and `GatedAdam` in `report.md`, `poster_text.md`, `qa.md`, and `STATUS.md`.
+- key numbers: 0 files in `lm/` and `outputs/phase4/`; 0 GPU accelerators available locally.
+- problems / decisions: Confirmed out of scope; no partial or unverified language model results exist.
+
+## Final Verification 2: Raw Result Re-derivation & Validation Split Isolation
+- status: done
+- what changed: Re-derived the five target metrics directly from the raw output JSON files (`outputs/phase2/final_perm10.json` and `outputs/phase3/final_repaired_perm10.json`) via independent Python parsing without consulting `master_summary.csv`. Verified tuning script isolation in `tune_val.py` and `tune_and_run_split.py` to ensure only `--eval_split val` was evaluated during hyperparameter search. Verified EWC lambda sweep across `{1, 5, 20, 100}` on validation seeds 0–2.
+- key numbers:
+  - `finetune` (Perm10): raw `[81.11, 78.44, 78.25, 76.12, 77.10]` -> **78.21 ± 1.68%**
+  - `ewc` (Perm10): raw `[91.69, 90.02, 90.59, 89.21, 89.58]` -> **90.22 ± 0.87%**
+  - `replay` (Perm10): raw `[95.22, 95.13, 95.29, 95.34, 95.11]` -> **95.22 ± 0.09%**
+  - `gate:magnitude` (Perm10): raw `[83.98, 84.43, 83.90, 81.96, 81.36]` -> **83.13 ± 1.22%**
+  - `gate:hybrid` (Perm10): raw `[84.58, 83.74, 84.05, 82.90, 83.84]` -> **83.82 ± 0.54%**
+  - EWC validation sweep: $\lambda=1$ (90.99%), $\lambda=5$ (92.79%), $\lambda=20$ (93.66%), $\lambda=100$ (92.35%) -> $\lambda=20$ chosen strictly on validation ACC.
+  - Discrepancies between raw files and `report.md`: **0**.
+- problems / decisions: Confirmed 100% strict data hygiene: tuning used validation split only; zero test set leakage.
+
+## Final Verification 3: gate:drift Implementation & Characterization
+- status: done
+- what changed: Verified `cl2.py` lines 126–129. Confirmed `gate:drift` does NOT add an auxiliary penalty term to the loss $\mathcal{L}$. It operates entirely at the gradient level inside `apply(model)` as an in-place gradient brake:
+  `e = p.detach() - s` (where $s = \theta_{start}$)
+  `cond = ((g * d > 0) | (g * e < 0)).float()`
+  `g.mul_(1 - self.beta * mag * cond)`
+  It brakes updates that expand distance from task start weights ($g \cdot e < 0$) or oppose historical displacement ($g \cdot d > 0$). Characterized its distinction from L2-SP ($\frac{\alpha}{2}\|\theta - \theta_{start}\|_2^2$ isotropic loss penalty) and EWC ($\frac{\lambda}{2}\sum F_i(\theta_i - \theta_i^*)^2$ Fisher-weighted loss penalty).
+- key numbers: Active gradient damping factor $(1 - \beta \cdot \text{mag} \cdot \mathbf{1}_{\text{cond}})$.
+- problems / decisions: Confirmed: `gate:drift` is an in-place gradient brake, not a loss-function penalty. All descriptions in report and presentations accurately reflect this.
+
+## Final Verification 4: Claim Fixes & Epistemological Claim Audit
+- status: done
+- what changed: Re-ran repository-wide regex scans for "prove", "proves", "proved", "proof". Replaced all instances with "supports", "indicates", or "suggests". Relabeled Split-MNIST shared-head logit interference explanation as `[HYPOTHESIS]` while keeping the ~62% ACC mutual tie labeled `[MEASURED]`. Updated `outputs/phase5/claim_audit.md` with complete verification and resolution records for all 13 items.
+- key numbers: 0 occurrences of "prove", "proves", "proved", "proof" remaining in any markdown deliverable.
+- problems / decisions: All claims audited and compliant with scientific reporting standards.
+
+## Final Verification 5: Honest Comparative Framing Alignment
+- status: done
+- what changed: Aligned `report.md`, `poster_text.md`, `qa.md`, and `script_60s.md` with explicit honest framing:
+  1. Repaired EWC (Perm10 ACC 90.22 ± 0.87%) outperforms every gate variant (83.13–83.82%) by >6.4 percentage points.
+  2. Gate variants beat fine-tuning by about 5 points (83.1–83.8% vs 78.21%).
+  3. No method without replay or task ID beats 62–64% on domain-incremental Split-MNIST (all buffer-free methods tie).
+  4. Removed all statements implying the gate competes with EWC.
+- key numbers: EWC margin over best gate: +6.40% ACC. Gate margin over fine-tuning: +4.92% to +5.62% ACC. Split-MNIST buffer-free ceiling: 61.90% to 63.96% ACC.
+- problems / decisions: Perfect cross-document alignment on the true comparative standing of the methods.
+
+## Final Verification 6: Project Naming Consistency
+- status: pending user selection (options: "AEGIS" or "Selective Plasticity")
+- what changed: Formulated clarification question for the user to select the preferred single project name. Currently, documents consistently identify the project under AEGIS (Autonomous Evaluation of Gradient-Gated Continual Learning Systems) and its core mechanism as Selective Plasticity / Gradient Gating.
+- key numbers: 1 user choice required.
+- problems / decisions: Prompt user via `ask_question`.
+
+## Final Verification 7: Clean-Clone Reproducibility Smoke Test
+- status: done
+- what changed: Cloned clean repository into `/tmp/aegis_smoke_test`. Executed README smoke test command: `python cl2.py --seeds 1 --epochs 1`. Verified all 6 methods ran, EWC divergence guard caught diverging run without crash, and results table was produced. Cleaned up temporary directory.
+- key numbers: Smoke test execution succeeded with exit code 0 in ~15s. Exact output matches stored results:
+  - finetune: ACC 87.5%, BWT -8.6%
+  - ewc: DIVERGED
+  - replay: ACC 92.6%, BWT -2.4%
+  - lora: ACC 89.7%, BWT 0.0%
+  - gate:conflict:1.0: ACC 30.3%, BWT -61.4%
+  - gate:magnitude:1.0: ACC 89.8%, BWT -2.3%
+- problems / decisions: Zero reproduction failures.
+
+## Final Verification 8: Final Completion Checklist (9 Deliverables)
+- status: done
+- what changed: Audited all 9 completion items from `AGENT_PLAN.md`. All 9 items verified as PASSED with exact file and command evidence.
+- key numbers: 9/9 checklist items PASSED (100%).
+- problems / decisions: Project verification complete.
+
