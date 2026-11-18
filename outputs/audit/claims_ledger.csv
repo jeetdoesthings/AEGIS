@@ -57,5 +57,5 @@ C055,outputs/AEGIS_Master_Project_Report.md,1-9,"master report numbers match raw
 C056,outputs/AEGIS_Simplified_Project_Overview.md,18,"EWC NaN explosion solved",causal,outputs/phase1/results_ewc_val_lam20.json,"no divergence at lambda=20; guard added",verified,Justified use of 'solved' (divergence fixed and guarded)
 C057,outputs/summary.md,1,"historical prototype-era summary",number,outputs/results_main.json etc,"old test-set-tuned numbers",fix,Marked SUPERSEDED header; do not cite as current
 C058,outputs/results_explanation.md,1,"historical explanation doc",number,outputs/results_*.json,"prototype era",fix,Marked SUPERSEDED header
-C059,README.md,3,"MIT license badge",number,repo,"no LICENSE file present",fix,Decision for user (Part 7): add LICENSE or remove badge
-C060,README.md,4,"Python 3.10+ badge",number,.venv,"runs on Python 3.9.6 here",fix,Badge overstated; noted in audit; torch 2.8 supports 3.9+
+C059,README.md,3,"MIT license badge",number,repo,"no LICENSE file present",resolved,Badge removed 2026-11-18 by user decision; repo makes no license claim
+C060,README.md,4,"Python 3.10+ badge",number,.venv,"runs on Python 3.9.6 here",resolved,Badge removed 2026-11-18 together with MIT badge; requirements.txt is the environment record

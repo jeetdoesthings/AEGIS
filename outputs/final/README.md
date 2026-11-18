@@ -1,8 +1,5 @@
 # AEGIS — Displacement-Based Update Gating for Continual Learning
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.8.0-ee4c2c.svg)](https://pytorch.org/)
-
 This repository contains a semester-long empirical study of catastrophic forgetting: what happens when a neural network trained on one task is trained on more tasks in sequence, and whether a cheap, buffer-free "gate" on weight updates can reduce the damage.
 
 The short version of what we found:

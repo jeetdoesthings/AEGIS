@@ -58,7 +58,7 @@ Every headline number in the master results table, the three benchmark tables, a
 | F30 | B12 | Major | seed-variance note (seeds change permutations) unstated | — | added to `report.md` §4.4 | fixed |
 | F31 | J2 | PASS | no secrets/tokens in history | `git log -p` grep | — | closed |
 | F32 | J1 | PASS | `.gitignore` covers `data/`, `.venv/`, `__pycache__/` | `.gitignore` | — | closed |
-| F33 | J4 | decision | README shows an MIT badge but no LICENSE file exists | repo tree | decision for user (§9) | open |
+| F33 | J4 | decision | README showed an MIT badge but no LICENSE file existed | repo tree | badge removed by user decision (2026-11-18); no license claimed | resolved |
 | F34 | C7 | partial | gate modes have a shared docstring (`cl2.py:86-96`) covering all six; no hard-coded absolute paths (relative `data/`, `outputs/`); seeds set in one place (`set_seed`); no dead code found; defaults documented via argparse help | `cl2.py` | — | closed |
 | F35 | A4 | PASS | paired-difference figures ("+4.92 ± 1.20") recomputed: mean ± ddof-0 std of per-seed (method − finetune) ACC on same seed/permulations; definition now stated in `report.md` §4.4 | `outputs/audit/recomputed_numbers.csv` | — | closed |
 | F36 | C6 | partial | no GPU available; CPU-only equivalence untestable | hardware | listed as limitation | open |
@@ -72,7 +72,7 @@ Ledger: `outputs/audit/claims_ledger.csv` — **60 claims** tracked.
 
 - **verified:** 41
 - **fix (fixed this audit):** 17
-- **unsupported remaining:** 2 (the two open decisions: MIT badge without LICENSE file; Python "3.10+" badge vs 3.9.6 runtime — cosmetic, see §9)
+- **unsupported remaining:** 0. The two cosmetic findings (MIT badge without LICENSE file; Python "3.10+" badge vs 3.9.6 runtime) were resolved after the audit: the user removed the badges from the README rather than adding a license (see §9).
 
 **Ten most important changes:**
 1. lr/batch size corrected in three documents (0.05/128, fixed across methods, not tuned).
@@ -165,7 +165,7 @@ Result: exit 0, all methods run, EWC divergence guard catches the diverging run 
 
 1. **Project name:** repo/status says **AEGIS**; earlier docs say "Selective Plasticity". STATUS.md Final Verification 6 records the user already chose "AEGIS", with "Selective Plasticity" as the mechanism name. **Confirm** this stands.
 2. **Title:** current README title ("Continual Learning with Directional & Magnitude Gradient Gating") no longer overstates the failed conflict variant, but `poster_text.md` still uses "Gradient-Conflict Gating" in its title line. Options: (a) keep as-is; (b) "Selective Plasticity: Displacement-Based Update Damping for Continual Fine-Tuning" (brief's suggestion); (c) "Beyond the Ratchet: Diagnosing and Repairing Displacement-Based Update Gating for Continual Learning". **User must choose**; not changed silently.
-3. **License:** README displays an MIT badge but there is no LICENSE file (F33). Either add `LICENSE` (MIT) or remove the badge. Default without a decision: badge removed next session.
+3. **License:** resolved 2026-11-18 — the user chose to remove the MIT badge (and the Python-version badge) instead of adding a LICENSE file. The repo makes no license claim; code is shared for review purposes only.
 4. **Language-model work:** Phase 4 is confirmed next-semester scope (documented as future work in `report.md` §8). No deadline change known; asked only if the user's timeline moved.
 
 ## 10. Citation verification
@@ -188,5 +188,5 @@ EWC (arXiv:1612.00796 / DOI 10.1073/pnas.1611835114) · SI (PMLR 70:3987-3995) �
 
 1. **(Major, before review)** Lay out `poster_text.md` into a poster PDF/PNG; export both final reports to PDF; assemble `outputs/final/` (done this session where tooling allowed).
 2. **(Major, next semester)** Re-tune repaired-gate hyperparameters per benchmark (F39); add SI/MAS/A-GEM/L2-SP baselines; raise seeds to 10.
-3. **(Minor)** Resolve the MIT-badge/LICENSE and Python-badge decisions; reconcile `report.md` title with the poster title once the user picks.
+3. **(Minor)** Done 2026-11-18: badges removed by user decision; project name (AEGIS) and title confirmed unchanged.
 4. **(Minor)** ddof=1 vs ddof=0: if the examiner audience prefers sample std, regenerate tables with ddof=1 — conclusions are unchanged except the Perm5 drift borderline case becomes an explicit tie.

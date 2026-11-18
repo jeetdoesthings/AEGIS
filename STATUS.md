@@ -48,6 +48,8 @@ Ran a full audit with fresh eyes before the review. Every headline number was re
 
 Reorganized the repository for the review: Phase-0 prototype artifacts moved to [`archive/phase0/`](archive/phase0/) with a superseded notice, PDF tooling to [`scripts/`](scripts/), the diverged EWC run to [`outputs/failed/`](outputs/failed/README.md), canonical overview documents to [`outputs/final/`](outputs/final/) (byte-identical duplicates removed), empty `lm/` and `phase4/` directories removed, and every absolute `file:///Users/...` link replaced with a relative path. Frozen review deliverables live in `outputs/final/`; tagged `sem1-review` and pushed. A second copy of `outputs/final/` is kept outside the repo.
 
+Decisions confirmed by the user the same day: project name **AEGIS** and title stand as-is; the MIT license badge was removed (no LICENSE file added — the repo makes no license claim), along with the environment badges (`requirements.txt` is the environment record).
+
 ## Where this is going (next semester)
 
 SI, MAS, A-GEM and L2-SP baselines; gate+EWC; 10 seeds; Split-CIFAR; then the GPT-2 experiment with `GatedAdam` if the vision results justify it; theory of the ratchet; thesis. The full week-by-week plan with decision gates is in `outputs/final/PROJECT_REPORT.md` §13. Standing rules: tune on validation only, 5–10 seeds, equal budgets, claims ledger kept current, no result without a config file.
