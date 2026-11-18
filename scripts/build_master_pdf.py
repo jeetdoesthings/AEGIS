@@ -96,7 +96,7 @@ def create_callout(text, title="KEY TAKEAWAY", bg_color="#F7FAFC", border_color=
     return t
 
 
-def build_pdf(filename="outputs/AEGIS_Master_Project_Report.pdf"):
+def build_pdf(filename="outputs/final/AEGIS_Master_Project_Report.pdf"):
     print(f"Building Master PDF report at {filename}...")
     doc = SimpleDocTemplate(
         filename,
@@ -578,7 +578,5 @@ def build_pdf(filename="outputs/AEGIS_Master_Project_Report.pdf"):
 
 
 if __name__ == "__main__":
-    out_pdf = "outputs/AEGIS_Master_Project_Report.pdf"
+    out_pdf = "outputs/final/AEGIS_Master_Project_Report.pdf"
     build_pdf(out_pdf)
-    shutil.copyfile(out_pdf, "outputs/phase5/AEGIS_Master_Project_Report.pdf")
-    print("Copied PDF to outputs/phase5/AEGIS_Master_Project_Report.pdf")

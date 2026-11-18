@@ -1,6 +1,6 @@
-# AGENT_PLAN.md: Selective Plasticity, finish the project
+# PLAN.md — Selective Plasticity semester plan
 
-You are a coding and research agent. Read this whole file, then work through the phases in order. Do not skip ahead. After every task, update `STATUS.md` (format in section 2) before starting the next one.
+Working plan for the semester: read the whole file, work through the phases in order, and update `STATUS.md` after each task before starting the next.
 
 Total target: take the project from a half-finished prototype to a complete, defensible final submission.
 
@@ -87,7 +87,7 @@ project/
   logs/
   configs/
   STATUS.md
-  AGENT_PLAN.md
+  PLAN.md
 ```
 
 ---

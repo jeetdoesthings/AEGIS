@@ -1,4 +1,5 @@
 import argparse
+import os
 import numpy as np
 import torch
 import matplotlib
@@ -107,7 +108,8 @@ def main():
 
     plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     plt.tight_layout()
-    out_path = "outputs/layer_protection.png"
+    out_path = "outputs/phase3/layer_protection.png"
+    os.makedirs("outputs/phase3", exist_ok=True)
     plt.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close()
     print(f"Saved {out_path}")

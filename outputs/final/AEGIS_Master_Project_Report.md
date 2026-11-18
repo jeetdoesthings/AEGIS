@@ -6,7 +6,7 @@
 **Workstation / Hardware:** Apple Silicon M4 (CPU execution)  
 **Code Repository:** [github.com/jeetdoesthings/AEGIS](https://github.com/jeetdoesthings/AEGIS)  
 **Date:** November 2026  
-**Compiled Master PDF:** [`outputs/AEGIS_Master_Project_Report.pdf`](file:///Users/jeet/Desktop/AEGIS/outputs/AEGIS_Master_Project_Report.pdf)  
+**Compiled Master PDF:** [`outputs/final/AEGIS_Master_Project_Report.pdf`](outputs/final/AEGIS_Master_Project_Report.pdf)  
 
 ---
 
@@ -197,7 +197,7 @@ Diagnostic telemetry on `gate:drift:0.1` (`outputs/phase5/layer_heatmap_best_gat
 ## 6. Phase 4: Language Model Scaling Specification (Future Work)
 
 ### 6.1 Hardware Scoping & Go/No-Go Decision
-Per Section 199 of `AGENT_PLAN.md`, Phase 4 was subject to a mandatory go/no-go gate:
+Per Section 199 of `PLAN.md`, Phase 4 was subject to a mandatory go/no-go gate:
 > *"Run Phase 4 on a GPU (Colab or similar); do not run it on CPU. If time/hardware constraints exist, skip to Phase 5 and describe Phase 4 as future work."*
 
 Because execution was conducted locally on an Apple Silicon M4 CPU, executing 8,000 steps of autoregressive transformer training across 4 text domains was computationally intractable. Consequently, Phase 4 was deliberately skipped and is specified in full detail as Future Work.
@@ -246,7 +246,7 @@ class GatedAdam(torch.optim.Optimizer):
 
 ## 7. Master Quantitative Results Compendium
 
-*All evaluations conducted on held-out test splits across 5 independent random seeds (100–104). Values reported as **mean ± std (%)**. Data source: [`outputs/phase5/master_summary.csv`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/master_summary.csv).*
+*All evaluations conducted on held-out test splits across 5 independent random seeds (100–104). Values reported as **mean ± std (%)**. Data source: [`outputs/phase5/master_summary.csv`](outputs/phase5/master_summary.csv).*
 
 | Method Family | Method Configuration | Perm5 ACC (%) | Perm5 BWT (%) | Perm10 ACC (%) | Perm10 BWT (%) | Split-MNIST ACC (%) | Split-MNIST BWT (%) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |

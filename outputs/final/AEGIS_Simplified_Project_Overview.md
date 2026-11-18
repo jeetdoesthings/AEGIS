@@ -4,8 +4,8 @@
 **Author:** Jeet & Project AEGIS Team  
 **Institution:** Machine Learning Research Lab  
 **Repository:** [github.com/jeetdoesthings/AEGIS](https://github.com/jeetdoesthings/AEGIS)  
-**Standalone PDF Brief:** [`outputs/AEGIS_Simplified_Project_Overview.pdf`](file:///Users/jeet/Desktop/AEGIS/outputs/AEGIS_Simplified_Project_Overview.pdf) (3 pages, executive layout)  
-**Comprehensive Technical Report:** [`outputs/AEGIS_Master_Project_Report.pdf`](file:///Users/jeet/Desktop/AEGIS/outputs/AEGIS_Master_Project_Report.pdf) (6 pages, exhaustive monograph)  
+**Standalone PDF Brief:** [`outputs/final/AEGIS_Simplified_Project_Overview.pdf`](outputs/final/AEGIS_Simplified_Project_Overview.pdf) (3 pages, executive layout)  
+**Comprehensive Technical Report:** [`outputs/final/AEGIS_Master_Project_Report.pdf`](outputs/final/AEGIS_Master_Project_Report.pdf) (6 pages, exhaustive monograph)  
 **Date:** November 2026  
 
 ---
@@ -56,7 +56,7 @@ The project was conducted in five sequential, rigorously documented stages:
 
 ## 3. What were the results?
 
-*All evaluations conducted on held-out test splits across 5 independent random seeds (100–104). Values reported as **mean ± std (%)**. Data source: [`outputs/phase5/master_summary.csv`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/master_summary.csv).*
+*All evaluations conducted on held-out test splits across 5 independent random seeds (100–104). Values reported as **mean ± std (%)**. Data source: [`outputs/phase5/master_summary.csv`](outputs/phase5/master_summary.csv).*
 
 | Method | Category | Perm5 ACC (%) | Perm10 ACC (%) | Split ACC (%) | Key Finding / Takeaway |
 | :--- | :--- | :---: | :---: | :---: | :--- |
@@ -84,19 +84,19 @@ The project was conducted in five sequential, rigorously documented stages:
 All deliverables are organized in `outputs/` and version-controlled:
 
 1. **Master Documents & Executive Briefs:**
-   - [`outputs/AEGIS_Simplified_Project_Overview.pdf`](file:///Users/jeet/Desktop/AEGIS/outputs/AEGIS_Simplified_Project_Overview.pdf): 3-page executive summary PDF.
-   - [`outputs/AEGIS_Master_Project_Report.pdf`](file:///Users/jeet/Desktop/AEGIS/outputs/AEGIS_Master_Project_Report.pdf): 6-page comprehensive technical monograph with embedded figures.
-   - [`outputs/phase5/report.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/report.md): Formal 8-section academic research paper draft.
-   - [`outputs/phase5/claim_audit.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/claim_audit.md): Epistemological audit verifying all claims against raw numbers under the tie rule.
+   - [`outputs/final/AEGIS_Simplified_Project_Overview.pdf`](outputs/final/AEGIS_Simplified_Project_Overview.pdf): 3-page executive summary PDF.
+   - [`outputs/final/AEGIS_Master_Project_Report.pdf`](outputs/final/AEGIS_Master_Project_Report.pdf): 6-page comprehensive technical monograph with embedded figures.
+   - [`outputs/phase5/report.md`](outputs/phase5/report.md): Formal 8-section academic research paper draft.
+   - [`outputs/phase5/claim_audit.md`](outputs/phase5/claim_audit.md): Epistemological audit verifying all claims against raw numbers under the tie rule.
 2. **Defense & Presentation Suite:**
-   - [`outputs/phase5/poster_text.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/poster_text.md): Publication-ready poster layout text.
-   - [`outputs/phase5/qa.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/qa.md): 15 examiner defense questions with exact empirical numbers.
-   - [`outputs/phase5/script_60s.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/script_60s.md): 60-second spoken poster script (~140 words).
+   - [`outputs/phase5/poster_text.md`](outputs/phase5/poster_text.md): Publication-ready poster layout text.
+   - [`outputs/phase5/qa.md`](outputs/phase5/qa.md): 15 examiner defense questions with exact empirical numbers.
+   - [`outputs/phase5/script_60s.md`](outputs/phase5/script_60s.md): 60-second spoken poster script (~140 words).
 3. **Data Tables & Visual Charts:**
-   - [`outputs/phase5/master_summary.csv`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/master_summary.csv) / [`master_summary.png`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/master_summary.png): 10-method cross-benchmark master comparison.
-   - [`outputs/phase5/forgetting_curve_perm10_all.png`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/forgetting_curve_perm10_all.png): 10-task retention curve plot.
-   - [`outputs/phase5/diagnostics_weight_norms.png`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/diagnostics_weight_norms.png) & [`diagnostics_drift_along_d.png`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/diagnostics_drift_along_d.png): Parameter telemetry confirming the ratchet mechanism.
-   - [`outputs/phase5/layer_heatmap_best_gate.png`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/layer_heatmap_best_gate.png): Layer gating hierarchy heatmap.
+   - [`outputs/phase5/master_summary.csv`](outputs/phase5/master_summary.csv) / [`master_summary.png`](outputs/phase5/master_summary.png): 10-method cross-benchmark master comparison.
+   - [`outputs/phase5/forgetting_curve_perm10_all.png`](outputs/phase5/forgetting_curve_perm10_all.png): 10-task retention curve plot.
+   - [`outputs/phase5/diagnostics_weight_norms.png`](outputs/phase5/diagnostics_weight_norms.png) & [`diagnostics_drift_along_d.png`](outputs/phase5/diagnostics_drift_along_d.png): Parameter telemetry confirming the ratchet mechanism.
+   - [`outputs/phase5/layer_heatmap_best_gate.png`](outputs/phase5/layer_heatmap_best_gate.png): Layer gating hierarchy heatmap.
 
 ---
 

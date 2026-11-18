@@ -87,7 +87,7 @@ def create_card(title, body, bg_color="#F7FAFC", border_color="#CBD5E0", title_c
     return t
 
 
-def build_pdf(filename="outputs/AEGIS_Simplified_Project_Overview.pdf"):
+def build_pdf(filename="outputs/final/AEGIS_Simplified_Project_Overview.pdf"):
     print(f"Building Simplified PDF overview at {filename}...")
     doc = SimpleDocTemplate(
         filename,
@@ -299,7 +299,7 @@ def build_pdf(filename="outputs/AEGIS_Simplified_Project_Overview.pdf"):
 
     out_cards = (
         "<b>1. Published Master Documents:</b><br/>"
-        "• <code>outputs/AEGIS_Master_Project_Report.pdf</code>: Comprehensive 6-page technical monograph with embedded figures.<br/>"
+        "• <code>outputs/final/AEGIS_Master_Project_Report.pdf</code>: Comprehensive 6-page technical monograph with embedded figures.<br/>"
         "• <code>outputs/phase5/report.md</code>: Formal 8-section academic research paper draft.<br/>"
         "• <code>outputs/phase5/claim_audit.md</code>: Epistemological audit verifying all claims against raw numbers under the tie rule.<br/>"
         "• <code>outputs/phase5/poster_text.md</code>, <code>qa.md</code>, <code>script_60s.md</code>: Ready-to-present defense materials.<br/>"
@@ -348,7 +348,5 @@ def build_pdf(filename="outputs/AEGIS_Simplified_Project_Overview.pdf"):
 
 
 if __name__ == "__main__":
-    out_pdf = "outputs/AEGIS_Simplified_Project_Overview.pdf"
+    out_pdf = "outputs/final/AEGIS_Simplified_Project_Overview.pdf"
     build_pdf(out_pdf)
-    shutil.copyfile(out_pdf, "outputs/phase5/AEGIS_Simplified_Project_Overview.pdf")
-    print("Copied Simplified PDF to outputs/phase5/AEGIS_Simplified_Project_Overview.pdf")

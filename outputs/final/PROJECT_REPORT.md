@@ -91,7 +91,7 @@ Setup: θ ∈ R^P; at the start of task t, θ_start is frozen. `d` is the decaye
 3. **First results (historical, superseded):** finetune 91.57±1.49; replay 95.19±0.09; lora 93.79±0.12; ewc 9.80±0.00; gate:conflict:1.0 15.89±0.41; gate:magnitude:1.0 92.36±0.32.
 4. **EWC failure found:** exactly 9.80% at λ ∈ {1000, 5000, 10000} — the class-0 share, consistent with NaN logits defaulting to class 0. Later formally diagnosed: quadratic-penalty explosion to NaN at step 13 (`outputs/phase1/ewc_diagnosis.txt`); repaired with λ=20 (perm) / λ=100 (split) chosen on validation + divergence guard.
 5. **Conflict gate failure found:** worse than fine-tuning at every tuned β. Ratchet hypothesis formed (§9).
-6. **AGENT_PLAN.md execution** (commits 19df00d…572c750): validation split + seed control (2ec680e), EWC repair (c5fb29b), fair tuning (5457a1c), final Perm5 (b1ca604), Perm10 (f5a03e6), Split-MNIST (9eac5c3), diagnostics + repaired variants + layer analysis (00453dc), deliverables pack (572c750), wording fixes (7e9076c, 652d30f). Phase 4 (GPT-2) **not done** — skipped per go/no-go rule (CPU-only machine), documented as future work.
+6. **PLAN.md execution** (commits 19df00d…572c750): validation split + seed control (2ec680e), EWC repair (c5fb29b), fair tuning (5457a1c), final Perm5 (b1ca604), Perm10 (f5a03e6), Split-MNIST (9eac5c3), diagnostics + repaired variants + layer analysis (00453dc), deliverables pack (572c750), wording fixes (7e9076c, 652d30f). Phase 4 (GPT-2) **not done** — skipped per go/no-go rule (CPU-only machine), documented as future work.
 7. **This audit** (2026-11-18): recomputation of all numbers from raw files, 15 tests, 6 Blocker fixes, reports, tag `sem1-review` (see `AUDIT_REPORT.md`).
 
 ## 8. Results
@@ -138,25 +138,26 @@ Full tables with FWT/NEW and paired differences: `report.md` §5, `outputs/phase
 | `tune_and_run_split.py` | code | tune + test Split-MNIST | Task 2.2 | outputs/phase2/final_split* | domain-incremental table | final |
 | `tune_and_run_repaired.py` | code | tune + test drift/hybrid/conflict_soft on all 3 benchmarks | Task 3.3 | outputs/phase3/final_repaired_* | repaired-variant tables | final |
 | `diagnostics.py` | code | step-level norms, gated fraction, drift along d; ratchet test | Task 3.1-2 | outputs/phase3/diag_*.csv | ratchet evidence | final |
-| `layer_analysis.py` | code | per-layer gated-fraction heatmap | Task 3.4 | outputs/layer_protection.png, phase3 heatmap | layer hierarchy | final |
+| `layer_analysis.py` | code | per-layer gated-fraction heatmap | Task 3.4 | outputs/phase3/layer_protection.png, phase5 heatmap | layer hierarchy | final |
 | `build_results_pack.py` | code | consolidates tables/plots into outputs/phase5/ | Task 5.1 | phase5 pack | deliverables | final |
-| `build_master_pdf.py`, `build_simplified_pdf.py` | code | build the two overview PDFs | post-Phase 5 | outputs/AEGIS_*.pdf | overview docs | final |
-| `analyze.py` | code | early plotting/summary script | Phase 0 era | outputs/*_main etc | historical | superseded |
-| `run_sweep.sh` | script | early gate sweep runner | Phase 0 era | outputs/gate_sweep | historical | superseded |
+| `scripts/build_master_pdf.py`, `scripts/build_simplified_pdf.py` | code | build the two overview PDFs | post-Phase 5 | outputs/final/AEGIS_*.pdf | overview docs | final |
+| `archive/phase0/analyze.py` | code | early plotting/summary script | Phase 0 era | archive/phase0/*.png | historical | superseded |
+| `archive/phase0/run_sweep.sh` | script | early gate sweep runner | Phase 0 era | archive/phase0/results_gate_sweep.json | historical | superseded |
 | `tests/test_cl2.py` | code | 15 audit tests (gate mechanics, metrics, splits, seeds, determinism, EWC, replay, β=0≡FT) | this audit | pytest | correctness guarantees | final |
 | `configs/locked_{perm5,split,repaired}.json` | config | locked best hyperparameters per benchmark | tune scripts | run scripts | tuning/test isolation | final |
 | `logs/` | logs | run logs incl. `audit_slow_tests.log` | runs | audit | provenance | final |
 | `outputs/phase1/` | results | EWC diagnosis + λ sweep, Perm5 tuning + final tables/curves/heatmaps, diverged-run record | Tasks 1.1–1.4 | report | Perm5 evidence | final |
 | `outputs/phase2/` | results | Perm10 + Split tuning/final tables, curves, heatmaps | Tasks 2.1–2.2 | report | Perm10/Split evidence | final |
 | `outputs/phase3/` | results | diagnostics CSVs, ratchet hypothesis/findings, repaired tables, layer heatmap | Tasks 3.1–3.5 | report | mechanism + repairs | final |
-| `outputs/phase4/`, `lm/` | — | empty (Phase 4 not done) | — | — | proof Phase 4 not run | scratch |
+| `outputs/failed/` | results | diverged EWC run (lambda=5000) + explanation; never cited in tables | Task 1.2 | audit | proves failed runs are reported honestly | final |
 | `outputs/phase5/` | results | report.md, claim_audit.md, poster_text.md, script_60s.md, qa.md, captions.md, master_summary.*, table_*, curves, heatmaps, diagnostics, layer heatmap; plus copies of the two overview docs | Task 5.x | presentation | deliverable pack | final |
 | `outputs/final/` | results | AUDIT_REPORT.md, PROJECT_REPORT.md (+PDFs), poster, script, qa, master_summary.csv, figures | this audit | the review | frozen deliverables | final |
+| `archive/phase0/` | results | Phase-0 prototype runs (raw JSONs, plots, legacy scripts) and the superseded summaries; kept for the record, superseded by phase1+ | Phase 0 | none | provenance of the first (flawed) experiments | superseded |
 | `outputs/audit/` | results | recompute.py, recomputed_numbers.csv, claims_ledger.csv, regression artifacts | this audit | AUDIT_REPORT | evidence of verification | final |
-| `outputs/AEGIS_Master_Project_Report.*`, `outputs/AEGIS_Simplified_Project_Overview.*` | docs | long/short overviews (PDF+MD) | post-Phase 5 | examiners | consistent with tables | final |
-| `outputs/summary.md`, `outputs/results_explanation.md` | docs | prototype-era summaries (test-set-tuned numbers) | Phase 0 era | — | historical only | **superseded** |
+| `outputs/final/AEGIS_Master_Project_Report.*`, `outputs/final/AEGIS_Simplified_Project_Overview.*` | docs | long/short overviews (PDF+MD) | post-Phase 5 | examiners | consistent with tables | final |
+| `archive/phase0/summary.md`, `archive/phase0/results_explanation.md` | docs | prototype-era summaries (test-set-tuned numbers) | Phase 0 era | — | historical only | **superseded** |
 | `STATUS.md` | doc | milestone log with per-task numbers | all phases | audit trail | chronology evidence | final |
-| `AGENT_PLAN.md` | doc | the executed plan (Phases 0–5, cut rules) | pre-Phase 0 | STATUS | scope reference | final |
+| `PLAN.md` | doc | the executed plan (Phases 0–5, cut rules) | pre-Phase 0 | STATUS | scope reference | final |
 | `MASTER_BRIEF.md` | doc | this audit's instructions (untracked/added by user) | user | audit | audit spec | final |
 | `README.md`, `requirements.txt` | docs | install, smoke test, reproduction commands, honest results table | Tasks 5.5 / audit | reproduction | entry point | final |
 | `.gitignore` | config | excludes `.venv/`, `data/`, `__pycache__/`, OS files | initial | git | hygiene | final |

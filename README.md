@@ -1,146 +1,131 @@
-# AEGIS: Continual Learning with Directional & Magnitude Gradient Gating
+# AEGIS — Displacement-Based Update Gating for Continual Learning
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.8.0-ee4c2c.svg)](https://pytorch.org/)
 
-An academically rigorous empirical investigation into catastrophic forgetting, directional gradient conflict gating, and parameter-drift dynamics across sequential neural network tasks.
+This repository contains a semester-long empirical study of catastrophic forgetting: what happens when a neural network trained on one task is trained on more tasks in sequence, and whether a cheap, buffer-free "gate" on weight updates can reduce the damage.
+
+The short version of what we found:
+
+1. The original idea — a gradient-conflict gate that blocks updates undoing past weight movement — **failed**: it is worse than plain fine-tuning on 5-task Permuted-MNIST and collapses on 10 tasks (41.92% vs 78.21% ACC). Step-level telemetry supports an "asymmetric ratchet" explanation: it blocks steps back toward old positions but lets outward steps run free, so weight norms double and drift away.
+2. Repaired variants (magnitude damping, and drift/hybrid gates that also brake steps away from the task-start weights) beat fine-tuning on 10-task Permuted-MNIST by about 5 points of ACC, with consistent per-seed differences — a modest but real gain without storing any old data.
+3. The honest headline: **repaired EWC, which also stores no old data, beats every gate variant** on both permuted benchmarks (90.22% vs at most 83.82% on 10 tasks). On Split-MNIST, no method without replay or a test-time task ID gets past 62–64% ACC.
+
+We do not claim to solve catastrophic forgetting. What the semester produced is a fair testbed, a diagnosed failure, tested repairs, and a clear-eyed comparison against stronger baselines.
 
 ---
 
-## 📌 Executive Summary
+## Results
 
-Continual learning in neural networks is fundamentally constrained by catastrophic forgetting—the overwriting of past representations when training on new data distributions. This project investigates whether parameter-space gradient gating can protect historical knowledge without storing past exemplars (replay buffers).
+All runs use 5 held-out test seeds (100–104) on the 10,000-image MNIST test split, after tuning on a separate 5,000-image validation split only. Values are mean ± std (%) over seeds. Source data: [`outputs/phase5/master_summary.csv`](outputs/phase5/master_summary.csv).
 
-Through exhaustive, fair-budget evaluations on held-out test splits across 5 independent random seeds (100–104), this project establishes:
-1. **The Directional Ratchet Failure:** The original directional gradient conflict gate (`gate:conflict`) fails catastrophically, collapsing to **$41.92 \pm 1.71\%$ accuracy** on 10 Permuted-MNIST tasks ($-36.29 \pm 2.82\%$ below plain fine-tuning). Step-level parameter diagnostics support the *asymmetric ratchet mechanism*: selectively zeroing updates opposing historical displacement ($g \cdot d > 0$) prevents restoring steps while letting outward steps proceed unhindered, causing parameter norms to double ($l1.weight$ L2 norm 22.70 vs 11.79 for fine-tuning) and run away along $d$.
-2. **Magnitude Outperforms Direction:** Ignoring update direction and dampening weights based purely on historical displacement magnitude (`gate:magnitude`) prevents runaway inflation and outperforms fine-tuning on 10 tasks ($83.13 \pm 1.22\%$ vs $78.21 \pm 1.68\%$).
-3. **Anti-Ratchet Repairs:** Formulating an anti-drift gradient gate (`gate:drift`, which damps updates that increase distance from starting weights $e = \theta - \theta_{start}$) and a hybrid gate (`gate:hybrid`) eliminates the ratchet runaway. On 10 tasks, `gate:hybrid` ($83.82 \pm 0.54\%$) and `gate:drift` ($83.21 \pm 1.26\%$) **outperform plain fine-tuning ($78.21 \pm 1.68\%$) by $>+5\%$ ACC under the tie rule** (non-overlapping mean ± std intervals; paired per-seed differences positive on all 5 seeds) without replay buffers.
-4. **The Output Head Bottleneck:** `[MEASURED]` On domain-incremental Split-MNIST, all buffer-free methods tie around $62\%$ ACC. `[HYPOTHESIS]` This collapse is attributed to representational collision at the shared 2-way output head, whereas exemplar replay ($96.85\%$) and parameter-isolated LoRA ($98.73\%$) retain near-optimal performance.
-5. **Honest Baseline Standing:** `[MEASURED]` Repaired EWC outperforms **every** gate variant on both Perm5 ($93.76 \pm 0.36\%$ vs at most $91.89 \pm 1.03\%$) and Perm10 ($90.22 \pm 0.87\%$ vs at most $83.82 \pm 0.54\%$) while also storing no old data (it stores a Fisher estimate and anchor weights). The gates' contribution is a diagnosed failure mode and a modest gain over fine-tuning, not an advance over EWC.
-
-> **Note on Phase 4 (Language Model Experiment):** Per the go/no-go gate rule in `AGENT_PLAN.md`, Phase 4 was skipped during local execution on CPU hardware and is documented strictly as Future Work. Training a 124M-parameter GPT-2 model across 4 domains on CPU without GPU acceleration is computationally intractable. Phases 0, 1, 2, 3, and 5 are fully completed.
-
----
-
-## 📊 Master Benchmark Results
-
-*All evaluations conducted on held-out test splits across 5 random seeds (100, 101, 102, 103, 104). Values reported as mean ± std (%). Source: [`outputs/phase5/master_summary.csv`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/master_summary.csv).*
-
-| Method | Perm5 ACC (%) | Perm5 BWT (%) | Perm10 ACC (%) | Perm10 BWT (%) | Split-MNIST ACC (%) | Split-MNIST BWT (%) |
+| Method | Perm5 ACC | Perm5 BWT | Perm10 ACC | Perm10 BWT | Split ACC | Split BWT |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Fine-Tuning (Plain SGD)** | $88.97 \pm 1.85$ | $-9.62 \pm 2.34$ | $78.21 \pm 1.68$ | $-20.80 \pm 1.84$ | $62.07 \pm 1.00$ | $-46.36 \pm 1.23$ |
-| **EWC (repaired, $\lambda=20/100$)** | $93.76 \pm 0.36$ | $-2.34 \pm 0.55$ | $90.22 \pm 0.87$ | $-4.17 \pm 0.93$ | $63.96 \pm 1.39$ | $-43.76 \pm 1.72$ |
-| **Replay (buffer=1000)** | $\mathbf{95.85 \pm 0.11}$ | $-1.18 \pm 0.14$ | $\mathbf{95.22 \pm 0.09}$ | $-1.92 \pm 0.14$ | $96.85 \pm 0.30$ | $-2.69 \pm 0.29$ |
-| **LoRA ($r=16/8$, oracle ID)\*** | $94.30 \pm 0.12$ | $\mathbf{0.00 \pm 0.00}$ | $94.05 \pm 0.05$ | $\mathbf{0.00 \pm 0.00}$ | $\mathbf{98.73 \pm 0.06}$ | $\mathbf{0.00 \pm 0.00}$ |
-| **Gate: Conflict (original, $\beta=0.25$)** | $81.73 \pm 1.41$ | $-17.60 \pm 1.84$ | $41.92 \pm 1.71$ | $-58.83 \pm 1.95$ | $62.28 \pm 0.98$ | $-45.88 \pm 1.24$ |
-| **Gate: Magnitude (ablation, $\beta=1.0$)** | $91.43 \pm 0.86$ | $-4.39 \pm 1.01$ | $83.13 \pm 1.22$ | $-12.82 \pm 1.33$ | $61.90 \pm 0.36$ | $-45.83 \pm 0.51$ |
-| **Gate: Layer Cosine ($\beta=0.5/1.0$)** | $89.00 \pm 2.32$ | $-9.62 \pm 2.98$ | $78.80 \pm 0.97$ | $-20.15 \pm 1.15$ | $62.05 \pm 1.02$ | $-46.39 \pm 1.26$ |
-| **Gate: Drift (repaired, $\beta=0.1$, decay 0.9)** | $91.89 \pm 1.03$ | $-5.82 \pm 1.39$ | $83.21 \pm 1.26$ | $-14.98 \pm 1.44$ | $62.62 \pm 1.03$ | $-45.61 \pm 1.27$ |
-| **Gate: Hybrid (repaired, $\beta=0.1$, $\gamma=0.5$)** | $90.98 \pm 0.90$ | $-6.64 \pm 1.20$ | $83.82 \pm 0.54$ | $-13.95 \pm 0.64$ | $62.78 \pm 0.56$ | $-45.11 \pm 0.71$ |
-| **Gate: Soft Conflict ($\beta=0.05$, decay 0.9)** | $90.68 \pm 0.58$ | $-7.44 \pm 0.79$ | $80.05 \pm 1.66$ | $-18.58 \pm 1.86$ | $62.34 \pm 1.03$ | $-45.99 \pm 1.28$ |
+| Fine-tuning (plain SGD) | 88.97 ± 1.85 | −9.62 ± 2.34 | 78.21 ± 1.68 | −20.80 ± 1.84 | 62.07 ± 1.00 | −46.36 ± 1.23 |
+| EWC (repaired, λ=20/100) | 93.76 ± 0.36 | −2.34 ± 0.55 | 90.22 ± 0.87 | −4.17 ± 0.93 | 63.96 ± 1.39 | −43.76 ± 1.72 |
+| Replay (buffer=1000) | **95.85 ± 0.11** | −1.18 ± 0.14 | **95.22 ± 0.09** | −1.92 ± 0.14 | 96.85 ± 0.30 | −2.69 ± 0.29 |
+| LoRA (r=16/8, oracle ID)\* | 94.30 ± 0.12 | **0.00 ± 0.00** | 94.05 ± 0.05 | **0.00 ± 0.00** | **98.73 ± 0.06** | **0.00 ± 0.00** |
+| Gate: conflict (original, β=0.25) | 81.73 ± 1.41 | −17.60 ± 1.84 | 41.92 ± 1.71 | −58.83 ± 1.95 | 62.28 ± 0.98 | −45.88 ± 1.24 |
+| Gate: magnitude (ablation, β=1.0) | 91.43 ± 0.86 | −4.39 ± 1.01 | 83.13 ± 1.22 | −12.82 ± 1.33 | 61.90 ± 0.36 | −45.83 ± 0.51 |
+| Gate: layer cosine (β=0.5/1.0) | 89.00 ± 2.32 | −9.62 ± 2.98 | 78.80 ± 0.97 | −20.15 ± 1.15 | 62.05 ± 1.02 | −46.39 ± 1.26 |
+| Gate: drift (repaired, β=0.1) | 91.89 ± 1.03 | −5.82 ± 1.39 | 83.21 ± 1.26 | −14.98 ± 1.44 | 62.62 ± 1.03 | −45.61 ± 1.27 |
+| Gate: hybrid (repaired, β=0.1, γ=0.5) | 90.98 ± 0.90 | −6.64 ± 1.20 | 83.82 ± 0.54 | −13.95 ± 0.64 | 62.78 ± 0.56 | −45.11 ± 0.71 |
+| Gate: soft conflict (β=0.05) | 90.68 ± 0.58 | −7.44 ± 0.79 | 80.05 ± 1.66 | −18.58 ± 1.86 | 62.34 ± 1.03 | −45.99 ± 1.28 |
 
-*\*LoRA utilizes an oracle task ID at test time to select task-specific adapters.*
+\* LoRA picks the task adapter using the true task ID at test time — a luxury real continual learning does not have, so its row is an upper bound, not a competitor.
+
+Two results are called a tie when their mean ± std intervals overlap; "beats" above means the intervals are separate and the per-seed paired differences agree in sign across all five seeds.
 
 ---
 
-## 🛠️ Repository Structure
+## How the experiments are kept fair
+
+- MNIST's 60,000 training images are split 55,000 train / 5,000 validation (fixed seed 42). The 10,000 test images are only touched by the final runs.
+- Every method gets the same tuning budget (at most 6 configurations, seeds 0–2) on validation. The winners are locked into `configs/locked_*.json` before any test run.
+- Training setup is identical everywhere: MLP 784-256-256-C from scratch, plain SGD, lr 0.05, batch 128, 3 epochs per task.
+- A divergence guard halts any run whose loss goes non-finite (this is how the original EWC failure was caught — see [`outputs/failed/`](outputs/failed/README.md)).
+
+---
+
+## Repository layout
 
 ```
 AEGIS/
-├── cl.py                       # Frozen original reference code
-├── cl2.py                      # Enhanced engine (splits, guards, diagnostics, repaired gates)
-├── tune_val.py                 # Hyperparameter sweep across 25 configs on validation split
-├── run_final_perm5.py          # Final 5-seed evaluation on 5-task Permuted-MNIST
-├── run_perm10.py               # Final 5-seed evaluation on 10-task Permuted-MNIST
-├── tune_and_run_split.py       # Validation tuning and test evaluation on Split-MNIST
-├── diagnostics.py              # Step-level parameter telemetry & ratchet hypothesis test
-├── tune_and_run_repaired.py    # Tuning & 5-seed evaluation of repaired gate variants
-├── build_results_pack.py       # Consolidates all tables, plots, and metadata for deliverables
-├── configs/                    # Locked JSON hyperparameters per benchmark
-│   ├── locked_perm5.json       # Best configs for 5-task Permuted-MNIST
-│   ├── locked_split.json       # Best configs for Split-MNIST
-│   └── locked_repaired.json    # Best configs for repaired gates
+├── cl.py                       # Original prototype, kept frozen as a reference
+├── cl2.py                      # Main experiment engine (splits, guards, all methods)
+├── tune_val.py                 # Validation sweep for Perm5 (seeds 0-2)
+├── run_final_perm5.py          # Final Perm5 evaluation (test seeds 100-104)
+├── run_perm10.py               # Final Perm10 evaluation
+├── tune_and_run_split.py       # Tune + evaluate Split-MNIST
+├── tune_and_run_repaired.py    # Tune + evaluate drift / hybrid / soft conflict
+├── diagnostics.py              # Step-level weight norms, drift along d, gated fraction
+├── layer_analysis.py           # Per-layer gated-fraction heatmap
+├── build_results_pack.py       # Consolidates tables and figures into outputs/phase5/
+├── scripts/                    # Tooling for the standalone overview PDFs
+├── tests/                      # Unit and regression tests (pytest)
+├── configs/                    # Locked best configurations per benchmark
+├── logs/                       # Run logs
 ├── outputs/
-│   ├── phase1/                 # EWC diagnosis, validation sweep, 5-task Permuted-MNIST test
-│   ├── phase2/                 # 10-task Permuted-MNIST and Split-MNIST test results
-│   ├── phase3/                 # Diagnostic CSVs, ratchet hypothesis, findings, layer heatmap
-│   └── phase5/                 # Final deliverables pack:
-│       ├── report.md           # Full academic research paper draft
-│       ├── claim_audit.md      # Statistical tie audit log verifying all assertions
-│       ├── poster_text.md      # Publication-ready poster text
-│       ├── qa.md               # 15 examiner defense questions with exact numbers
-│       ├── script_60s.md       # 60-second spoken poster script
-│       ├── captions.md         # Detailed figure and table captions
-│       ├── master_summary.*    # Consolidated 10-method comparison (CSV + PNG)
-│       ├── table_*.*           # Per-benchmark publication tables (CSV + PNG)
-│       └── *.png               # Forgetting curves, heatmaps, diagnostics, and layer plots
-└── STATUS.md                   # Real-time task progress log appended after every milestone
+│   ├── phase1/                 # EWC diagnosis, validation sweep, Perm5 final runs
+│   ├── phase2/                 # Perm10 and Split-MNIST final runs
+│   ├── phase3/                 # Diagnostics, ratchet analysis, repaired gates
+│   ├── phase5/                 # Report, poster text, Q&A, tables, figures
+│   ├── final/                  # Frozen review deliverables (reports, poster, figures)
+│   ├── audit/                  # Number recomputation, claims ledger, regression runs
+│   └── failed/                 # Diverged/invalid runs, kept for the record
+├── archive/phase0/             # First prototype experiments (superseded; see note below)
+├── PLAN.md                     # Semester plan the work followed
+├── STATUS.md                   # Research log, oldest to newest
+└── requirements.txt
 ```
+
+A note on [`archive/phase0/`](archive/phase0/): the very first experiments tuned hyperparameters on the test set — a mistake we found and corrected. Those raw results are kept (not deleted) so the improvement in methodology is visible, but nothing from there is cited as a current result.
 
 ---
 
-## 🚀 Reproduction Commands
+## Reproducing
 
-### 1. Environment Setup
+### 1. Setup
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+MNIST downloads automatically via torchvision into `data/` on first use.
 
-### 2. Fast Smoke Test (1 seed, 1 epoch)
+### 2. Smoke test (~15 s, 1 seed, 1 epoch)
 ```bash
 python cl2.py --seeds 1 --epochs 1
 ```
 
-### 3. Permuted-MNIST 5-Task Pipeline
+### 3. Full pipeline (CPU; a few minutes per benchmark)
 ```bash
-# Tune all 7 methods across 25 configs on validation split (seeds 0-2)
-python tune_val.py
-
-# Evaluate locked configs across 5 fresh test seeds (100-104)
-python run_final_perm5.py
+python tune_val.py               # validation sweep, Perm5
+python run_final_perm5.py        # final Perm5, 5 test seeds
+python run_perm10.py             # final Perm10
+python tune_and_run_split.py     # Split-MNIST
+python tune_and_run_repaired.py  # repaired gate variants
+python diagnostics.py            # ratchet telemetry
+python build_results_pack.py     # rebuild tables/figures in outputs/phase5/
 ```
 
-### 4. Permuted-MNIST 10-Task Evaluation
+### 4. Tests
 ```bash
-# Evaluate locked configs on 10 sequential tasks across 5 test seeds (100-104)
-python run_perm10.py
-```
-
-### 5. Split-MNIST Evaluation
-```bash
-# Tune on validation and evaluate 5 test seeds on domain-incremental digit pairs
-python tune_and_run_split.py
-```
-
-### 6. Mechanistic Diagnostics & Hypothesis Test
-```bash
-# Log step-by-step weight norms, drift along d, and test ratchet hypothesis
-python diagnostics.py
-```
-
-### 7. Repaired Gates Evaluation
-```bash
-# Tune repaired gates (drift, hybrid, soft) and evaluate across 5 seeds on all benchmarks
-python tune_and_run_repaired.py
-```
-
-### 8. Build Final Phase 5 Deliverables Pack
-```bash
-# Regenerate master tables, plots, and figures in outputs/phase5/
-python build_results_pack.py
+python -m pytest tests/          # 15 tests: gate mechanics, metrics, split isolation
 ```
 
 ---
 
-## 📚 Deliverables & Documentation
+## Documents
 
-- **Full Academic Report:** [`outputs/phase5/report.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/report.md)
-- **Claim Audit & Statistical Verification:** [`outputs/phase5/claim_audit.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/claim_audit.md)
-- **Poster Presentation Text:** [`outputs/phase5/poster_text.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/poster_text.md)
-- **15 Examiner Defense Q&A:** [`outputs/phase5/qa.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/qa.md)
-- **60-Second Spoken Poster Script:** [`outputs/phase5/script_60s.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/script_60s.md)
-- **Figure & Table Captions:** [`outputs/phase5/captions.md`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/captions.md)
-- **Milestone Log:** [`STATUS.md`](file:///Users/jeet/Desktop/AEGIS/STATUS.md)
+- **Semester report:** [`outputs/final/PROJECT_REPORT.md`](outputs/final/PROJECT_REPORT.md) (PDF alongside)
+- **Audit report:** [`outputs/final/AUDIT_REPORT.md`](outputs/final/AUDIT_REPORT.md) (PDF alongside)
+- **Full paper draft:** [`outputs/phase5/report.md`](outputs/phase5/report.md)
+- **Claim audit:** [`outputs/phase5/claim_audit.md`](outputs/phase5/claim_audit.md)
+- **Poster text / 60-second script / Q&A:** [`poster_text.md`](outputs/phase5/poster_text.md) · [`script_60s.md`](outputs/phase5/script_60s.md) · [`qa.md`](outputs/phase5/qa.md)
+- **Figure captions:** [`outputs/phase5/captions.md`](outputs/phase5/captions.md)
+- **Short overview / long overview PDFs:** [`outputs/final/AEGIS_Simplified_Project_Overview.pdf`](outputs/final/AEGIS_Simplified_Project_Overview.pdf) · [`outputs/final/AEGIS_Master_Project_Report.pdf`](outputs/final/AEGIS_Master_Project_Report.pdf)
+
+## Status and what's next
+
+This semester covered the vision testbed, the baselines, the conflict-gate failure and its diagnosis, and the repaired variants. Next semester: SI/MAS/A-GEM/L2-SP baselines, gate+EWC, a GPT-2 experiment with a gate on Adam's final update, and a written thesis. See [`STATUS.md`](STATUS.md) for the full log and [`outputs/final/PROJECT_REPORT.md`](outputs/final/PROJECT_REPORT.md) §13 for the week-by-week plan.

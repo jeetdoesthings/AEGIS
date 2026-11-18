@@ -20,7 +20,7 @@ Every headline number in the master results table, the three benchmark tables, a
 - **CPU-vs-GPU equivalence (C6):** no CUDA device exists on this machine; all runs are CPU. Recorded as a limitation.
 - **Full re-execution of the 5-seed final runs (F1, full form):** re-running all 10 methods × 5 seeds × 3 benchmarks is ~hours of CPU. A clean-clone smoke test and targeted re-runs (regression, determinism, EWC, beta-0 equivalence) were run instead; results below.
 - **The two generated overview documents** (`AEGIS_Master_Project_Report.md/pdf`, `AEGIS_Simplified_Project_Overview.md/pdf`) were spot-checked, not re-audited line by line; their tables match `master_summary.csv`.
-- **`lm/` and `outputs/phase4/`:** confirmed empty (Phase 4 not done, as the brief instructed to assume).
+- **`lm/` and `outputs/phase4/`:** were empty (Phase 4 not done, as the brief instructed to assume); removed during the post-audit cleanup.
 
 ## 3. Findings table
 
@@ -40,7 +40,7 @@ Every headline number in the master results table, the three benchmark tables, a
 | F12 | G3 | Major | Titans cited with wrong arXiv ID (2412.19837 = an unrelated paper) and wrong authors; L2-SP "arXiv:1809.05322" is a propagated citation error (that ID is a robotics paper); MAS, LwF, PCGrad, A-GEM, L2-SP, van de Ven, Robins, Goodfellow missing from references | web-search verification (§10 of this report) | references list rebuilt with verified IDs; wrong IDs removed | fixed |
 | F13 | C3 | Major | no test suite existed | repo tree | 15 tests written in `tests/test_cl2.py`; all pass | fixed |
 | F14 | F2 | Major | no `requirements.txt` | repo tree | created with exact pinned versions (torch 2.8.0, torchvision 0.23.0, numpy 2.0.2, pandas 2.3.3, matplotlib 3.9.4; Python 3.9.6) | fixed |
-| F15 | A8 | Major | historical prototype-era docs (`outputs/summary.md`, `outputs/results_explanation.md`) carried old test-set-tuned numbers with no marker | file contents | SUPERSEDED banner added to both | fixed |
+| F15 | A8 | Major | historical prototype-era docs (`archive/phase0/summary.md`, `archive/phase0/results_explanation.md` after today's reorganization; originally `outputs/summary.md`, `outputs/results_explanation.md`) carried old test-set-tuned numbers with no marker | file contents | SUPERSEDED banner added to both | fixed |
 | F16 | E2 | Major | "statistically outperform(s)" used in 6 places with no named test | grep | reworded to "outperforms under the tie rule (non-overlapping intervals, paired signs consistent)"; report §4.5 now states no significance test is claimed | fixed |
 | F17 | I3 | Major | Perm5 `gate:drift` "outperforms" was stated without the borderline caveat: margin is 0.04 points and the result is a tie under ddof=1 | `outputs/audit/recomputed_numbers.csv` | borderline caveat added in `report.md` (exec summary + §5.1) and `qa.md` Q10 | fixed |
 | F18 | D2 | Major | ratchet section named neither evidence type nor alternative explanations | `report.md` §6.1 | rewritten: correlational logs + interventional repair evidence; two named alternatives (plasticity loss; d dominated by task-1 movement) with the NEW-metric counterpoint | fixed |
@@ -175,7 +175,7 @@ EWC (arXiv:1612.00796 / DOI 10.1073/pnas.1611835114) · SI (PMLR 70:3987-3995) �
 
 ## 11. Changes made / not made
 
-**Changed (this audit):** `outputs/phase5/report.md` (8 fixes), `README.md` (3), `outputs/phase5/poster_text.md` (3), `outputs/phase5/qa.md` (4), `outputs/phase5/captions.md` (3), new `requirements.txt`, new `tests/test_cl2.py`, new `outputs/audit/{recompute.py, recomputed_numbers.csv, claims_ledger.csv, regression/}`, SUPERSEDED banners on `outputs/summary.md` and `outputs/results_explanation.md`, `STATUS.md` final entry. Committed before tagging `sem1-review`.
+**Changed (this audit):** `outputs/phase5/report.md` (8 fixes), `README.md` (3), `outputs/phase5/poster_text.md` (3), `outputs/phase5/qa.md` (4), `outputs/phase5/captions.md` (3), new `requirements.txt`, new `tests/test_cl2.py`, new `outputs/audit/{recompute.py, recomputed_numbers.csv, claims_ledger.csv, regression/}`, SUPERSEDED banners on `archive/phase0/summary.md` and `archive/phase0/results_explanation.md` (then at `outputs/summary.md` / `outputs/results_explanation.md`), `STATUS.md` final entry. Committed before tagging `sem1-review`.
 
 **Not made, with reasons:**
 - No code changes to `cl2.py`/`cl.py` — no confirmed bug in result-producing code (Rule 9).
