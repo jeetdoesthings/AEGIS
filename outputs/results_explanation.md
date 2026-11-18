@@ -1,3 +1,5 @@
+> **[SUPERSEDED — AUDIT NOTE, Nov 2026]** This is a historical Phase-0-era document. It describes the prototype runs whose hyperparameters were tuned on the test set (a flaw later corrected) and whose numbers are superseded by `outputs/phase5/report.md` and `outputs/phase5/master_summary.csv`. Kept for the record; do not cite these numbers as current results.
+
 # Continual Learning Experiment: Comprehensive Results & Analysis
 
 This document provides a complete empirical evaluation of the continual learning experiment on Permuted-MNIST (5 sequential tasks, small MLP architecture, plain SGD optimization).

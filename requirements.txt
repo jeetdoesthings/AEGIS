@@ -1,0 +1,8 @@
+# Pinned environment for AEGIS continual-learning experiments.
+# Python version used for all reported runs: 3.9.6 (see AUDIT_REPORT.md F2).
+# Install: python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+torch==2.8.0
+torchvision==0.23.0
+numpy==2.0.2
+pandas==2.3.3
+matplotlib==3.9.4

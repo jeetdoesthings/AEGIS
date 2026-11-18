@@ -14,8 +14,8 @@ Continual learning in artificial neural networks remains bottlenecked by catastr
 Through an academically rigorous experimental framework comprising isolated train/validation/test splits, equal hyperparameter tuning budgets, and multi-seed evaluations across Permuted-MNIST (5 and 10 tasks) and domain-incremental Split-MNIST, we establish three primary empirical findings:
 1. `[MEASURED]` The original directional conflict gate (`gate:conflict`) fails catastrophically: on 5-task Permuted-MNIST, it degrades accuracy relative to plain fine-tuning by $-7.24 \pm 1.38\%$ ($81.73 \pm 1.41\%$ vs $88.97 \pm 1.85\%$), and on 10 tasks, accuracy collapses to $41.92 \pm 1.71\%$ (a $-36.29 \pm 2.82\%$ drop vs fine-tuning's $78.21 \pm 1.68\%$).
 2. `[MEASURED]` Step-level parameter diagnostics support the *asymmetric ratchet hypothesis*: selectively zeroing updates that oppose $d$ ($g \cdot d > 0$) while allowing updates aligned with $d$ to proceed unhindered causes weights to blow up unidirectionally (Task 5 $l1.weight$ L2 norm doubles to 22.700 vs 11.790 for fine-tuning) and run away along $d$ (+2.263 vs -0.145 for fine-tuning).
-3. `[MEASURED]` Two repaired variants—an anti-drift gradient gate (`gate:drift`, which checks distance expansion from task start weights) and a multiplicative conflict-magnitude damper (`gate:hybrid`)—eliminate the runaway mechanism. On 5-task Permuted-MNIST, `gate:drift` achieves $91.89 \pm 1.03\%$ ACC ($+2.92 \pm 0.96\%$ over fine-tuning, non-overlapping intervals). On 10-task Permuted-MNIST, `gate:hybrid` and `gate:drift` achieve $83.82 \pm 0.54\%$ and $83.21 \pm 1.26\%$ ACC respectively, statistically outperforming plain fine-tuning ($78.21 \pm 1.68\%$) by about 5 points ($+5.62\%$ and $+5.01\%$) without storing any past data.
-4. `[MEASURED]` **Honest Comparative Framing**: Repaired EWC (Perm10 ACC $90.22 \pm 0.87\%$) outperforms every gate variant ($83.13–83.82\%$) by over 6.4 percentage points. While the gate variants beat fine-tuning by about 5 points, the gate is not competitive with EWC. Furthermore, on domain-incremental Split-MNIST, no method without replay or task ID beats $62–64\%$ ACC (fine-tuning $62.07\%$, gates $61.90–62.78\%$, EWC $63.96\%$, all buffer-free methods forming a mutual statistical tie).
+3. `[MEASURED]` Two repaired variants—an anti-drift gradient gate (`gate:drift`, which checks distance expansion from task start weights) and a multiplicative conflict-magnitude damper (`gate:hybrid`)—eliminate the runaway mechanism. On 5-task Permuted-MNIST, `gate:drift` achieves $91.89 \pm 1.03\%$ ACC ($+2.92 \pm 0.96\%$ over fine-tuning; non-overlapping mean ± std intervals, but only by a 0.04-point margin — borderline, and a tie under the sample std convention ddof=1). On 10-task Permuted-MNIST, `gate:hybrid` and `gate:drift` achieve $83.82 \pm 0.54\%$ and $83.21 \pm 1.26\%$ ACC respectively, outperforming plain fine-tuning ($78.21 \pm 1.68\%$) by about 5 points ($+5.62\%$ and $+5.01\%$) under the tie rule (non-overlapping intervals, paired per-seed differences positive for all 5 seeds), without storing any past data.
+4. `[MEASURED]` **Honest Comparative Framing**: Repaired EWC (Perm10 ACC $90.22 \pm 0.87\%$) outperforms every gate variant ($83.13–83.82\%$) by over 6.4 percentage points on Perm10, and also outperforms every gate variant on Perm5 ($93.76 \pm 0.36\%$ vs at most $91.89 \pm 1.03\%$). While the gate variants beat fine-tuning by about 5 points on Perm10, the gate is not competitive with EWC. Furthermore, on domain-incremental Split-MNIST, no method without replay or task ID beats $62–64\%$ ACC (fine-tuning $62.07\%$, gates $61.90–62.78\%$, EWC $63.96\%$, all buffer-free methods forming a mutual statistical tie).
 
 ---
 
@@ -41,9 +41,15 @@ The methods benchmarked in this work span four major families of continual learn
 2. **Experience Replay** (Robins, 1995; Chaudhry et al., 2019): Stores a small coreset of historical input-label pairs in an episodic memory buffer and interleaves them into mini-batch training. Replay serves as an empirical upper bound for continual adaptation but violates strict data-privacy and memory-free deployment constraints.
 3. **Parameter-Isolated Adapters (LoRA)** (Hu et al., 2021): Freezes shared backbone weights and trains low-rank adapter matrices ($W = W_0 + \frac{\alpha}{r} B A$). In continual learning, routing inputs to dedicated adapters prevents backward interference ($BWT = 0.00\%$), but requires an oracle task ID at test time.
 4. **Gradient-Based and Weight-Trajectory Protection**:
-   - **Synaptic Intelligence (SI)** (Zenke et al., 2017): Accumulates parameter importance online by tracking the inner product of parameter updates and gradients along optimization trajectories ($\omega_k = \sum g_t \Delta \theta_t$).
-   - **Gradient Episodic Memory (GEM)** (Lopez-Paz & Ranzato, 2017): Uses quadratic programming to project the current gradient onto the half-space satisfying $\langle g, g_k \rangle \ge 0$ for all stored replay gradients.
-   - **Titans & Neural Memory** (Behrouz et al., 2024): Incorporates surprise-based gating and momentum-driven memory modules into sequence models.
+   - **Synaptic Intelligence (SI)** (Zenke et al., 2017): Accumulates parameter importance online by tracking the inner product of parameter updates and gradients along optimization trajectories ($\omega_k = \sum g_t \Delta \theta_t$). Closest relative to this work: SI also derives protection from observed weight movement, but converts it into a quadratic loss penalty rather than a direct gradient gate.
+   - **Memory Aware Synapses (MAS)** (Aljundi et al., 2018): Estimates parameter importance unsupervised from the sensitivity of the model output to perturbations; again a quadratic loss penalty.
+   - **Learning without Forgetting (LwF)** (Li & Hoiem, 2017): Uses knowledge distillation from the previous model's outputs on the new task's data; no stored old data, but requires shared input structure.
+   - **Gradient Episodic Memory (GEM)** (Lopez-Paz & Ranzato, 2017): Uses quadratic programming to project the current gradient onto the half-space satisfying $\langle g, g_k \rangle \ge 0$ for all stored replay gradients. **A-GEM** (Chaudhry et al., 2019) makes this cheaper with a single random memory pair.
+   - **PCGrad** (Yu et al., 2020): Projects conflicting task gradients in multi-task learning; the gradient-conflict idea applied within a task instead of across tasks.
+   - **L2-SP** (Li et al., 2018): Anchored regularization $\frac{\alpha}{2}\|\theta - \theta_{ref}\|_2^2$ for incremental domain adaptation; the loss-penalty analogue of `gate:drift`.
+   - **Experience replay** (Robins, 1995): interleaves stored old examples; the strongest baseline but requires data storage.
+   - **Titans & Neural Memory** (Behrouz et al., 2025): Incorporates surprise-based gating and momentum-driven memory modules into sequence models.
+5. **Scenarios**: van de Ven & Tolias (2019) formalize the task-, domain- and class-incremental scenarios; Permuted-MNIST is domain-incremental with a fixed 10-way head, and our Split-MNIST variant is domain-incremental with a shared 2-way head.
 
 ### Relationship to Prior Art
 The Gradient-Conflict Gate investigated here is **not novel**. It is conceptually derived from the intersection of Synaptic Intelligence (tracking cumulative weight displacement $d = \theta - \theta_{start}$) and GEM (penalizing or zeroing gradient updates that exhibit directional conflict). Rather than claiming algorithmic novelty, this work systematically uncovers the exact mathematical failure modes of naive directional gradient gating, diagnoses its mechanistic collapse, and formulates stable, mathematically grounded repairs.
@@ -65,7 +71,8 @@ At full damping ($\beta = 1.0$), conflicting gradient elements are set to zero. 
 
 ### 3.2 Magnitude Ablation (`gate:magnitude`)
 To test whether directional information is necessary, the magnitude ablation completely ignores the sign of $g \cdot d$ and instead dampens updates on weights that have experienced large historical displacements:
-$$g_{gated} = g \odot \max\left(0, 1 - \beta \frac{|d|}{\max(|d|) + \epsilon}\right)$$
+$$\text{mag} = \min\left(\frac{|d|}{\overline{|d|} + \epsilon},\ 1\right), \qquad g_{gated} = g \odot (1 - \beta \cdot \text{mag})$$
+where $\overline{|d|}$ is the mean absolute displacement over that parameter tensor (per-tensor, computed in `Gate.apply` in `cl2.py`). The scale $1 - \beta\cdot\text{mag}$ therefore lies in $[1-\beta,\ 1]$ and equals $1$ wherever $d = 0$.
 
 ### 3.3 Layer-Level Cosine Gate (`gate:layer_cos`)
 Instead of element-wise masking, this variant evaluates the aggregate layer-wise cosine similarity:
@@ -105,12 +112,13 @@ To prevent data leakage, the standard MNIST training split (60,000 images) was d
 
 ### 4.3 Model Architecture & Training Protocol
 - **Architecture**: Small Multi-Layer Perceptron (MLP) with two hidden layers: $784 \to 256 \to 256 \to C$, ReLU activations. (For Split-MNIST, $C=2$; for Permuted-MNIST, $C=10$). Total parameters: 269,322.
-- **Optimizer**: Plain Stochastic Gradient Descent (SGD), learning rate $\eta = 0.01$, batch size 64, 3 epochs per task.
+- **Optimizer**: Plain Stochastic Gradient Descent (SGD), learning rate $\eta = 0.05$, batch size 128, 3 epochs per task. The learning rate, batch size and epoch count were fixed once and shared by every method (not tuned); only method-specific hyperparameters (EWC $\lambda$, replay buffer size, LoRA rank, gate $\beta$/$\gamma$/decay) were tuned on validation. (Source: `run_final_perm5.py`, `run_perm10.py`, `tune_and_run_split.py`, `tune_and_run_repaired.py` — all pass `lr=0.05, bs=128, epochs=3`; see `cl2.py` `train_task`.)
 - **Divergence Guard**: Embedded telemetry halting any run where training loss becomes non-finite ($\text{loss} = \text{NaN/Inf}$), preventing silent failures from populating tables with corrupted numbers.
 
 ### 4.4 Tuning & Test Protocol
 - **Hyperparameter Tuning**: Performed strictly on the validation split across seeds 0, 1, and 2. Each method was allocated an equal tuning budget ($\le 6$ configurations). The best configuration was selected by highest validation ACC (ties broken by BWT, then NEW) and locked into JSON configurations before any test evaluation.
 - **Final Evaluation**: Conducted across 5 independent test seeds (100, 101, 102, 103, 104) on the held-out test split.
+- **Statistics conventions**: All ± values are mean ± population standard deviation (numpy `std`, `ddof=0`) over the 5 test seeds; the same convention is used for every table, figure and paired difference. Because seeds change the task permutations, the std includes both training randomness and task-sequence variance. "Paired difference vs FT" is the per-seed difference (method ACC − fine-tuning ACC on the same seed and same permutations), reported as mean ± std of those 5 differences. This convention is conservative (ddof=1 sample std would give slightly wider intervals).
 - **Metrics Reported**:
   - $ACC = \frac{1}{T} \sum_{j=1}^T R_{T, j}$: Final average accuracy across all $T$ tasks at the end of training.
   - $BWT = \frac{1}{T-1} \sum_{j=1}^{T-1} (R_{T, j} - R_{j, j})$: Backward transfer; average accuracy change on old tasks (negative values quantify catastrophic forgetting).
@@ -119,13 +127,15 @@ To prevent data leakage, the standard MNIST training split (60,000 images) was d
   - $\Delta ACC \text{ vs FT}$ and $\Delta BWT \text{ vs FT}$: Paired per-seed difference against plain fine-tuning.
 
 ### 4.5 Statistical Tie Rule
-In accordance with rigorous statistical practices, two methods are reported as a **statistical tie** if their `mean ± std` intervals overlap. Claims of "beating" or "outperforming" are strictly reserved for non-overlapping distributions.
+In accordance with rigorous statistical practices, two methods are reported as a **statistical tie** if their `mean ± std` intervals overlap. Claims of "beating" or "outperforming" are strictly reserved for non-overlapping intervals **and** per-seed paired differences that agree in sign across all 5 seeds. No formal hypothesis test (t-test, Wilcoxon) is run; with 5 seeds and many comparisons, interval overlap is the decision rule, and no claim of statistical "significance" is made. With six gate variants evaluated on three benchmarks, some differences would be expected to arise by chance.
 
 ---
 
 ## 5. Empirical Results
 
 All quantitative values are cited directly from the experimental result files in `outputs/phase5/`.
+
+**Note on FWT**: on the permuted benchmarks FWT is small ($0.5$–$2.1\%$ across methods, `final_perm5_table.csv` / `final_perm10_table.csv`) — effectively near zero relative to the 78–96% accuracy scale, because each task is an independent random pixel permutation that offers no head start from earlier tasks. On Split-MNIST the FWT reference is the untrained 2-way head (~50% chance level), and the same near-zero pattern holds relative to that reference.
 
 ### 5.1 Permuted-MNIST (5 Tasks)
 *(Evaluated across 5 test seeds: 100–104 on held-out test split)*
@@ -139,16 +149,16 @@ All quantitative values are cited directly from the experimental result files in
 | **Gate: Conflict (original, $\beta=0.25$)** | $81.73 \pm 1.41$ | $-7.24 \pm 1.38$ | $-17.60 \pm 1.84$ | $-7.98 \pm 1.67$ | $1.68 \pm 1.33$ | $95.81 \pm 0.10$ |
 | **Gate: Magnitude (ablation, $\beta=1.0$)** | $91.43 \pm 0.86$ | $+2.46 \pm 1.73$ | $-4.39 \pm 1.01$ | $+5.23 \pm 2.23$ | $1.68 \pm 1.15$ | $94.94 \pm 0.06$ |
 | **Gate: Layer Cosine ($\beta=1.0$)** | $89.00 \pm 2.32$ | $+0.02 \pm 0.86$ | $-9.62 \pm 2.98$ | $-0.00 \pm 1.07$ | $1.37 \pm 0.77$ | $96.69 \pm 0.12$ |
-| **Gate: Drift (repaired, $c=0.1$)** | $91.89 \pm 1.03$ | $+2.92 \pm 0.96$ | $-5.82 \pm 1.39$ | $+3.80 \pm 1.16$ | $1.45 \pm 0.70$ | $96.54 \pm 0.11$ |
-| **Gate: Hybrid (repaired, $c=0.1$)** | $90.98 \pm 0.90$ | $+2.01 \pm 1.35$ | $-6.64 \pm 1.20$ | $+2.98 \pm 1.64$ | $1.43 \pm 0.88$ | $96.29 \pm 0.08$ |
-| **Gate: Soft Conflict ($\beta=0.1$)** | $90.68 \pm 0.58$ | $+1.71 \pm 1.58$ | $-7.44 \pm 0.79$ | $+2.17 \pm 1.96$ | $1.42 \pm 0.89$ | $96.63 \pm 0.11$ |
+| **Gate: Drift (repaired, $\beta=0.1$, decay 0.9)** | $91.89 \pm 1.03$ | $+2.92 \pm 0.96$ | $-5.82 \pm 1.39$ | $+3.80 \pm 1.16$ | $1.45 \pm 0.70$ | $96.54 \pm 0.11$ |
+| **Gate: Hybrid (repaired, $\beta=0.1$, $\gamma=0.5$, decay 1.0)** | $90.98 \pm 0.90$ | $+2.01 \pm 1.35$ | $-6.64 \pm 1.20$ | $+2.98 \pm 1.64$ | $1.43 \pm 0.88$ | $96.29 \pm 0.08$ |
+| **Gate: Soft Conflict ($\beta=0.05$, decay 0.9)** | $90.68 \pm 0.58$ | $+1.71 \pm 1.58$ | $-7.44 \pm 0.79$ | $+2.17 \pm 1.96$ | $1.42 \pm 0.89$ | $96.63 \pm 0.11$ |
 
 *\*LoRA requires an oracle task ID at test time to select the task adapter.*
 
 #### Key Observations (Perm5):
 1. `[MEASURED]` Original `gate:conflict` performs worse than plain fine-tuning: final ACC is $-7.24 \pm 1.38\%$ lower ($81.73 \pm 1.41\%$ vs $88.97 \pm 1.85\%$), and backward forgetting is nearly doubled ($-17.60 \pm 1.84\%$ vs $-9.62 \pm 2.34\%$).
 2. `[MEASURED]` The magnitude ablation (`gate:magnitude`) achieves $91.43 \pm 0.86\%$ ACC (paired difference $+2.46 \pm 1.73\%$ over fine-tuning; independent intervals $[90.57, 92.29]$ and $[87.12, 90.82]$ overlap slightly, constituting a statistical tie under the independent interval rule) while cutting backward forgetting in half ($-4.39 \pm 1.01\%$ vs $-9.62 \pm 2.34\%$).
-3. `[MEASURED]` The repaired `gate:drift` variant achieves $91.89 \pm 1.03\%$ ACC, which statistically outperforms plain fine-tuning ($88.97 \pm 1.85\%$) under the non-overlapping tie rule ($91.89 - 1.03 = 90.86 > 88.97 + 1.85 = 90.82$).
+3. `[MEASURED]` The repaired `gate:drift` variant achieves $91.89 \pm 1.03\%$ ACC, which outperforms plain fine-tuning ($88.97 \pm 1.85\%$) under the non-overlapping tie rule ($91.89 - 1.03 = 90.86 > 88.97 + 1.85 = 90.82$) with positive paired differences on all 5 seeds — but only by a 0.04-point margin; this result is borderline (under the sample-std convention ddof=1 the intervals overlap and it is a tie) and should not be stressed without the caveat.
 4. `[MEASURED]` Replay ($1000$ exemplars) achieves the highest final ACC ($95.85 \pm 0.11\%$), while LoRA achieves zero backward forgetting ($BWT = 0.00 \pm 0.00\%$) via isolated adapters.
 
 ---
@@ -165,14 +175,14 @@ All quantitative values are cited directly from the experimental result files in
 | **Gate: Conflict (original, $\beta=0.25$)** | $41.92 \pm 1.71$ | $-36.29 \pm 2.82$ | $-58.83 \pm 1.95$ | $-38.03 \pm 3.13$ | $1.07 \pm 1.16$ | $94.86 \pm 0.15$ |
 | **Gate: Magnitude (ablation, $\beta=1.0$)** | $83.13 \pm 1.22$ | $+4.92 \pm 1.20$ | $-12.82 \pm 1.33$ | $+7.97 \pm 1.34$ | $0.94 \pm 0.65$ | $94.67 \pm 0.04$ |
 | **Gate: Layer Cosine ($\beta=1.0$)** | $78.80 \pm 0.97$ | $+0.59 \pm 2.40$ | $-20.15 \pm 1.15$ | $+0.64 \pm 2.66$ | $0.52 \pm 0.68$ | $96.94 \pm 0.09$ |
-| **Gate: Drift (repaired, $c=0.1$)** | $83.21 \pm 1.26$ | $+5.01 \pm 1.48$ | $-14.98 \pm 1.44$ | $+5.82 \pm 1.59$ | $0.68 \pm 0.73$ | $96.69 \pm 0.08$ |
-| **Gate: Hybrid (repaired, $c=0.1$)** | $83.82 \pm 0.54$ | $+5.62 \pm 1.21$ | $-13.95 \pm 0.64$ | $+6.84 \pm 1.30$ | $0.47 \pm 1.06$ | $96.38 \pm 0.05$ |
-| **Gate: Soft Conflict ($\beta=0.1$)** | $80.05 \pm 1.66$ | $+1.85 \pm 1.38$ | $-18.58 \pm 1.86$ | $+2.22 \pm 1.52$ | $0.94 \pm 0.65$ | $96.77 \pm 0.10$ |
+| **Gate: Drift (repaired, $\beta=0.1$, decay 0.9)** | $83.21 \pm 1.26$ | $+5.01 \pm 1.48$ | $-14.98 \pm 1.44$ | $+5.82 \pm 1.59$ | $0.68 \pm 0.73$ | $96.69 \pm 0.08$ |
+| **Gate: Hybrid (repaired, $\beta=0.1$, $\gamma=0.5$, decay 1.0)** | $83.82 \pm 0.54$ | $+5.62 \pm 1.21$ | $-13.95 \pm 0.64$ | $+6.84 \pm 1.30$ | $0.47 \pm 1.06$ | $96.38 \pm 0.05$ |
+| **Gate: Soft Conflict ($\beta=0.05$, decay 0.9)** | $80.05 \pm 1.66$ | $+1.85 \pm 1.38$ | $-18.58 \pm 1.86$ | $+2.22 \pm 1.52$ | $0.94 \pm 0.65$ | $96.77 \pm 0.10$ |
 
 #### Key Observations (Perm10):
 1. `[MEASURED]` Over a 10-task horizon, catastrophic forgetting accelerates in plain fine-tuning: BWT drops to $-20.80 \pm 1.84\%$, pulling final ACC down to $78.21 \pm 1.68\%$.
-2. `[MEASURED]` The original `gate:conflict` experiences catastrophic compounding breakdown: final ACC drops to $41.92 \pm 1.71\%$ ($-36.29 \pm 2.82\%$ lower than fine-tuning) with an extreme backward transfer collapse of $-58.83 \pm 1.95\%$. Task 1 retention falls to $14.28 \pm 1.57\%$ (near chance for 10 classes).
-3. `[MEASURED]` Both repaired variants statistically outperform fine-tuning with non-overlapping distributions by about 5 points: `gate:hybrid` achieves $83.82 \pm 0.54\%$ ACC ($+5.62 \pm 1.21\%$) and `gate:drift` achieves $83.21 \pm 1.26\%$ ACC ($+5.01 \pm 1.48\%$).
+2. `[MEASURED]` The original `gate:conflict` experiences catastrophic compounding breakdown: final ACC drops to $41.92 \pm 1.71\%$ ($-36.29 \pm 2.82\%$ lower than fine-tuning) with an extreme backward transfer collapse of $-58.83 \pm 1.95\%$. Task 1 retention falls to $13.44 \pm 4.44\%$ (near chance for 10 classes; `outputs/phase2/final_perm10.json`, $R_{10,1}$).
+3. `[MEASURED]` Both repaired variants outperform fine-tuning under the tie rule (non-overlapping mean ± std intervals; paired differences positive on all 5 seeds) by about 5 points: `gate:hybrid` achieves $83.82 \pm 0.54\%$ ACC ($+5.62 \pm 1.21\%$) and `gate:drift` achieves $83.21 \pm 1.26\%$ ACC ($+5.01 \pm 1.48\%$).
 4. `[MEASURED]` Repaired EWC ($\lambda=20$) achieves $90.22 \pm 0.87\%$ ACC with BWT limited to $-4.17 \pm 0.93\%$, **outperforming every gate variant ($83.13–83.82\%$) by over 6.4 percentage points**. While the gate variants beat fine-tuning by about 5 points, the gate is not competitive with EWC.
 
 ---
@@ -189,9 +199,9 @@ All quantitative values are cited directly from the experimental result files in
 | **Gate: Conflict (original, $\beta=0.25$)** | $62.28 \pm 0.98$ | $+0.21 \pm 0.35$ | $-45.88 \pm 1.24$ | $+0.49 \pm 0.48$ | $2.38 \pm 2.84$ | $98.98 \pm 0.06$ |
 | **Gate: Magnitude (ablation, $\beta=1.0$)** | $61.90 \pm 0.36$ | $-0.16 \pm 0.72$ | $-45.83 \pm 0.51$ | $+0.54 \pm 0.83$ | $1.10 \pm 3.54$ | $98.56 \pm 0.07$ |
 | **Gate: Layer Cosine ($\beta=0.5$)** | $62.05 \pm 1.02$ | $-0.02 \pm 0.04$ | $-46.39 \pm 1.26$ | $-0.03 \pm 0.05$ | $2.43 \pm 2.99$ | $99.16 \pm 0.04$ |
-| **Gate: Drift (repaired, $c=0.1$)** | $62.62 \pm 1.03$ | $+0.55 \pm 0.15$ | $-45.61 \pm 1.27$ | $+0.75 \pm 0.19$ | $2.40 \pm 3.05$ | $99.11 \pm 0.03$ |
-| **Gate: Hybrid (repaired, $c=0.1$)** | $62.78 \pm 0.56$ | $+0.72 \pm 0.54$ | $-45.11 \pm 0.71$ | $+1.26 \pm 0.64$ | $2.42 \pm 3.05$ | $98.87 \pm 0.01$ |
-| **Gate: Soft Conflict ($\beta=0.1$)** | $62.34 \pm 1.03$ | $+0.27 \pm 0.18$ | $-45.99 \pm 1.28$ | $+0.38 \pm 0.24$ | $2.43 \pm 3.03$ | $99.13 \pm 0.04$ |
+| **Gate: Drift (repaired, $\beta=0.1$, decay 0.9)** | $62.62 \pm 1.03$ | $+0.55 \pm 0.15$ | $-45.61 \pm 1.27$ | $+0.75 \pm 0.19$ | $2.40 \pm 3.05$ | $99.11 \pm 0.03$ |
+| **Gate: Hybrid (repaired, $\beta=0.1$, $\gamma=0.5$, decay 1.0)** | $62.78 \pm 0.56$ | $+0.72 \pm 0.54$ | $-45.11 \pm 0.71$ | $+1.26 \pm 0.64$ | $2.42 \pm 3.05$ | $98.87 \pm 0.01$ |
+| **Gate: Soft Conflict ($\beta=0.05$, decay 0.9)** | $62.34 \pm 1.03$ | $+0.27 \pm 0.18$ | $-45.99 \pm 1.28$ | $+0.38 \pm 0.24$ | $2.43 \pm 3.03$ | $99.13 \pm 0.04$ |
 
 #### Key Observations (Split-MNIST):
 1. `[MEASURED]` No method without replay or task ID beats $62–64\%$ on Split-MNIST: all buffer-free weight regularization and gating methods (EWC $63.96 \pm 1.39\%$, fine-tuning $62.07 \pm 1.00\%$, and all six gate variants $61.90–62.78\%$) collapse into a mutual statistical tie between $61.90\%$ and $63.96\%$ ACC, suffering catastrophic backward transfer between $-43.76\%$ and $-46.39\%$.
@@ -209,7 +219,7 @@ The original gate defined conflict as $g \cdot d > 0$ and applied $g \leftarrow 
 
 - `[MEASURED]` **Parameter L2 Norms** (`outputs/phase5/diagnostics_weight_norms.png`): By Task 5, layer 1 weights ($l1.weight$) under `gate:conflict` expanded to an L2 norm of $22.700$, compared to $11.790$ under fine-tuning and $12.291$ under `gate:magnitude`.
 - `[MEASURED]` **Cumulative Drift Along $d$** (`outputs/phase5/diagnostics_drift_along_d.png`): Projecting parameter displacement onto the historical displacement vector ($\frac{(\theta - \theta_{start}) \cdot d}{\|d\|_2}$) revealed that `gate:conflict` drifted $+2.263$ along $d$ on Task 5, whereas fine-tuning drifted $-0.145$ and `gate:magnitude` drifted $-0.016$.
-- `[MEASURED]` **Gated Fraction** (`outputs/phase5/diagnostics_gated_fraction.png`): Over $80\%$ of parameter elements satisfied $g \cdot d > 0$ and were gated at every optimization step across tasks 2 through 5.
+- `[MEASURED]` **Gated Fraction** (`outputs/phase5/diagnostics_gated_fraction.png`): On average about 48% of parameter elements per tensor had their gradient damped at each step under `gate:conflict` across tasks 2–5 (per-tensor means 45–50%, `outputs/phase3/diag_all.csv`); under `gate:magnitude` every element with $d \ne 0$ is damped (fraction 1.0 by construction).
 
 ```
                     The Asymmetric Ratchet Effect
@@ -223,11 +233,11 @@ The original gate defined conflict as $g \cdot d > 0$ and applied $g \leftarrow 
                  Weights blow up unidirectionally, causing representational collapse.
 ```
 
-- `[MEASURED]` **Hypothesis Decision**: The **Ratchet Hypothesis is SUPPORTED**. Directional conflict gating acts as a one-way mechanical ratchet. It selectively prohibits any SGD update that would restore parameters toward their historical starting point while permitting outward-directed steps without constraint. Over successive tasks, this induces runaway parameter inflation and destroys network stability.
+- `[MEASURED]` **Hypothesis Decision**: The telemetry and the repair experiment together **support** the asymmetric ratchet hypothesis, without proving it. Two evidence types back it: (i) correlational step-level logs showing monotone norm growth and positive drift along $d$ only under `gate:conflict` (3 seeds, 0–2; `outputs/phase3/diag_all.csv`), and (ii) interventional evidence that repairs which remove the asymmetry (`gate:drift`, `gate:hybrid`) eliminate the runaway and recover accuracy. At least two alternative explanations are not fully excluded: (a) gated updates may simply slow new-task learning (plasticity loss) rather than cause representational collapse — partially addressed by the NEW metric, where `gate:conflict` on Perm10 reaches $94.86 \pm 0.15\%$ NEW (close to fine-tuning's $96.92\%$), so the failure is retention, not refusal to learn; (b) $d$ may be dominated by task 1's movement away from the random initialization, making the "protected direction" an artifact of initialization rather than of prior tasks. Distinguishing (b) would require re-anchoring $d$ or per-task displacement ablations (future work).
 
 ### 6.2 Why Magnitude Gating and Drift Repairs Work
 - `gate:magnitude` measures only $|d|$ without regard to sign, avoiding any directional bias or asymmetric filtering.
-- `gate:drift` directly counters the ratchet by checking the drift-expansion condition ($g \cdot e < 0$, where $e = \theta - \theta_{start}$). Whenever a proposed SGD step would increase parameter distance from the task start anchor, the gate damps the step, acting as a gradient-level barrier analogous to L2-SP / movement-weighted EWC without an explicit loss penalty. As measured in Table 1 and Table 2, this fully stabilizes training, statistically outperforming fine-tuning by $+2.92\%$ on Perm5 and $+5.62\%$ on Perm10.
+- `gate:drift` directly counters the ratchet by checking the drift-expansion condition ($g \cdot e < 0$, where $e = \theta - \theta_{start}$). Whenever a proposed SGD step would increase parameter distance from the task start anchor, the gate damps the step, acting as a gradient-level barrier analogous to L2-SP / movement-weighted EWC without an explicit loss penalty. As measured in Table 1 and Table 2, this fully stabilizes training, outperforming fine-tuning under the tie rule by $+2.92\%$ on Perm5 (borderline; see Section 5.1) and $+5.62\%$ on Perm10.
 
 ### 6.3 Layer Gating Hierarchy
 Examining the proportion of gated weights per layer for `gate:drift:0.1` (`outputs/phase5/layer_heatmap_best_gate.png`) reveals an intuitive anatomical hierarchy:
@@ -305,9 +315,19 @@ class GatedAdam(torch.optim.Optimizer):
 
 ## References
 
-1. Kirkpatrick, J., Pascanu, R., Rabinowitz, N., et al. (2017). Overcoming catastrophic forgetting in neural networks. *Proceedings of the National Academy of Sciences (PNAS)*, 114(13), 3521-3526.
+1. Kirkpatrick, J., Pascanu, R., Rabinowitz, N., et al. (2017). Overcoming catastrophic forgetting in neural networks. *Proceedings of the National Academy of Sciences (PNAS)*, 114(13), 3521-3526. DOI 10.1073/pnas.1611835114; arXiv:1612.00796.
 2. Zenke, F., Poole, B., & Ganguli, S. (2017). Continual Learning Through Synaptic Intelligence. *International Conference on Machine Learning (ICML)*, PMLR 70:3987-3995.
-3. Lopez-Paz, D., & Ranzato, M. A. (2017). Gradient Episodic Memory for Continual Learning. *Advances in Neural Information Processing Systems (NeurIPS)*, 30.
-4. Chaudhry, A., Rohrbach, M., Elhoseiny, M., et al. (2019). On Tiny Episodic Memories in Continual Learning. *arXiv preprint arXiv:1902.10486*.
-5. Hu, E. J., Shen, Y., Wallis, P., et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models. *International Conference on Learning Representations (ICLR)*.
-6. Behrouz, A., Santacroce, M., & Pelechrinis, K. (2024). Titans: Learning to Memorize at Test Time. *arXiv preprint arXiv:2412.19837*.
+3. Aljundi, R., Babiloni, F., Elhoseiny, M., Rohrbach, M., & Tuytelaars, T. (2018). Memory Aware Synapses: Learning what (not) to forget. *ECCV 2018*. arXiv:1711.09601.
+4. Li, Z., & Hoiem, D. (2018). Learning without Forgetting. *IEEE TPAMI*, 40(12), 2935-2947. DOI 10.1109/TPAMI.2017.2773081 (ECCV 2016 version: DOI 10.1007/978-3-319-46493-0_37).
+5. Lopez-Paz, D., & Ranzato, M. A. (2017). Gradient Episodic Memory for Continual Learning. *Advances in Neural Information Processing Systems (NeurIPS)*, 30. arXiv:1706.08840.
+6. Chaudhry, A., Ranzato, M., Rohrbach, M., & Elhoseiny, M. (2019). Efficient Lifelong Learning with A-GEM. *ICLR 2019*. arXiv:1812.00420.
+7. Chaudhry, A., Rohrbach, M., Elhoseiny, M., et al. (2019). On Tiny Episodic Memories in Continual Learning. *arXiv preprint arXiv:1902.10486*.
+8. Yu, T., Kumar, S., Gupta, A., Levine, S., Hausman, K., & Finn, C. (2020). Gradient Surgery for Multi-Task Learning. *NeurIPS 2020*. arXiv:2001.06782.
+9. Li, X., Zhou, Y., Wu, T., Yao, J., & Tang, D. (2019). Visual Domain Transfer with Incremental Learning: An L2-SP Initialization Approach. ICML 2019 Continual Learning Workshop (no arXiv record; cited by title and authors).
+10. Robins, A. (1995). Catastrophic forgetting, rehearsal and pseudorehearsal. *Connection Science*, 7(2), 123-146. DOI 10.1080/09540099550039318.
+11. Goodfellow, I. J., Mirza, M., Xiao, D., Courville, A., & Bengio, Y. (2013). An Empirical Investigation of Catastrophic Forgetting in Gradient-Based Neural Networks. arXiv:1312.6211.
+12. Hu, E. J., Shen, Y., Wallis, P., et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models. *International Conference on Learning Representations (ICLR 2022)*. arXiv:2106.09685.
+13. Behrouz, A., Zhong, P., & Mirrokni, V. (2024). Titans: Learning to Memorize at Test Time. arXiv:2501.00663.
+14. van de Ven, G. M., & Tolias, A. S. (2019). Three scenarios for continual learning. arXiv:1904.07734.
+
+*All citations were verified by web search during the pre-review audit (see `outputs/final/AUDIT_REPORT.md`, section on citation verification); any that could not be verified were removed.*

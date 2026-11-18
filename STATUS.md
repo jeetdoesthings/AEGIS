@@ -1,5 +1,20 @@
 # Project Status
 
+## Final Audit (pre-review, day 0) — VERDICT: GO
+- status: done
+- what changed: Fresh-agent audit per MASTER_BRIEF.md. Recomputed all 60 headline numbers from raw results_*.json (0 mismatches under ddof=0): outputs/audit/recompute.py, recomputed_numbers.csv. Built claims ledger (60 claims: 41 verified, 17 fixed): outputs/audit/claims_ledger.csv. Wrote 15 unit tests (tests/test_cl2.py), all pass (logs/audit_slow_tests.log). Ran cl.py vs cl2.py regression (90.8±2.4 vs 91.3±1.8 — within 1 std; outputs/audit/regression/).
+- key numbers: 6 Blockers found and fixed: (1) lr/batch 0.01/64 → 0.05/128 in report.md, poster_text.md, qa.md; (2) conflict_soft β=0.1 → 0.05 and hybrid γ=0.25 → 0.5 labels vs configs/locked_repaired.json; (3) magnitude formula in report.md §3.2 did not match cl2.py:116; (4) ">80% gated" → measured ~48% (diag_all.csv); (5) Task-1 retention 14.28±1.57 → 13.44±4.44; (6) EWC-beats-gates statement added for Perm5. Majors fixed: ddof=0 convention stated, Titans arXiv 2412.19837 → 2501.00663 (old ID is a different paper), L2-SP arXiv ID removed (propagated error), 8 missing references added and verified, "statistically outperform" reworded (no significance test claimed), Perm5 drift flagged borderline, ratchet alternatives named, diagnostics seed count (3) stated, FWT≈0 explanation added, requirements.txt created, historical docs marked SUPERSEDED.
+- problems / decisions: Open user decisions (do not decide unilaterally): project name/title confirmation; MIT badge exists but no LICENSE file; README badge says Python 3.10+ while runs used 3.9.6. Not done: designed poster PDF (poster is laid-out text, PDF+PNG exported), CPU/GPU cross-check (no GPU), repaired-gate hyperparameters were tuned on Perm5 validation only (recorded as limitation).
+- next: review meeting; next-semester plan in PROJECT_REPORT.md §13.
+
+## Freeze & Backup (pre-review)
+- status: done
+- what changed: Both reports written (outputs/final/AUDIT_REPORT.md — verdict GO; outputs/final/PROJECT_REPORT.md, 16 sections). Exported to PDF via pandoc (pypandoc-binary) → HTML(MathML) → Chrome headless print (AUDIT_REPORT 9pp, PROJECT_REPORT 13pp, poster 4pp; text-layer verified). outputs/final/ assembled: reports (MD+PDF), poster_text (PDF+PNG), README.md, script_60s.md, qa.md, captions.md, claim_audit.md, master_summary.csv+png, table_*.png, forgetting curves, split heatmap, diagnostics PNGs. Second-location copy made. Committed and tagged sem1-review.
+- key numbers: outputs/final/ = 24 files. Tests 15/15 pass. Claims ledger 60 rows.
+- problems / decisions: none open beyond Part 7 decisions listed above.
+- next: none this semester.
+
+
 ## Task 0.1 Environment & Device Check
 - status: done
 - what changed: Verified .venv with torch 2.8.0, torchvision, matplotlib, numpy, pandas. Benchmarked CPU vs MPS on MLP operations.

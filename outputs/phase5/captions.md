@@ -66,19 +66,19 @@ This document contains standardized, publication-ready captions for every visual
 
 ### Figure 7: Mechanistic Diagnostics — Parameter L2 Weight Norms
 - **Files**: [`outputs/phase5/diagnostics_weight_norms.png`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/diagnostics_weight_norms.png)
-- **Caption**: *Figure 7: Step-by-step parameter L2 norms ($\|\theta_l\|_2$) across 5 Permuted-MNIST tasks for fine-tuning, gate:conflict, and gate:magnitude. Gate:conflict exhibits explosive parameter growth in layer 1 weights ($l1.weight$ norm reaches 22.700 by Task 5, compared to 11.790 for fine-tuning), confirming the runaway ratchet mechanism.*
+- **Caption**: *Figure 7: Step-by-step parameter L2 norms ($\|\theta_l\|_2$) across 5 Permuted-MNIST tasks for fine-tuning, gate:conflict, and gate:magnitude (3 diagnostics seeds 0–2, mean over seeds). Gate:conflict exhibits explosive parameter growth in layer 1 weights ($l1.weight$ norm reaches 22.700 by Task 5, compared to 11.790 for fine-tuning), supporting the runaway ratchet mechanism.*
 
 ---
 
 ### Figure 8: Mechanistic Diagnostics — Cumulative Parameter Drift Along Accumulated Direction $d$
 - **Files**: [`outputs/phase5/diagnostics_drift_along_d.png`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/diagnostics_drift_along_d.png)
-- **Caption**: *Figure 8: Parameter displacement projected onto the accumulated drift direction ($\frac{(\theta - \theta_{start}) \cdot d}{\|d\|_2}$) across training steps. In gate:conflict, blocking opposing gradient updates while permitting aligned updates causes unidirectional runaway drift (+2.263 on Task 5 $l1.weight$, versus -0.145 for fine-tuning and -0.016 for gate:magnitude).*
+- **Caption**: *Figure 8: Parameter displacement projected onto the accumulated drift direction ($\frac{(\theta - \theta_{start}) \cdot d}{\|d\|_2}$) across training steps (3 diagnostics seeds 0–2, mean over seeds). In gate:conflict, blocking opposing gradient updates while permitting aligned updates causes unidirectional runaway drift (+2.263 on Task 5 $l1.weight$, versus -0.145 for fine-tuning and -0.016 for gate:magnitude). All mean ± std values in these captions use the population std (ddof=0) over 5 final test seeds unless stated otherwise.*
 
 ---
 
 ### Figure 9: Mechanistic Diagnostics — Fraction of Gated Parameters
 - **Files**: [`outputs/phase5/diagnostics_gated_fraction.png`](file:///Users/jeet/Desktop/AEGIS/outputs/phase5/diagnostics_gated_fraction.png)
-- **Caption**: *Figure 9: Fraction of parameter elements receiving non-zero damping scale per optimization step across tasks 2 to 5 for gate:conflict and gate:magnitude. More than 80% of parameters trigger conflict damping at every step.*
+- **Caption**: *Figure 9: Fraction of parameter elements receiving non-zero damping scale per optimization step across tasks 2 to 5 for gate:conflict and gate:magnitude (3 diagnostics seeds 0–2, mean over seeds). Under gate:conflict about 48% of elements per tensor are conflict-damped at each step (per-tensor means 45–50%, `outputs/phase3/diag_all.csv`); under gate:magnitude all elements with $d \ne 0$ are damped (fraction 1.0 by construction).*
 
 ---
 

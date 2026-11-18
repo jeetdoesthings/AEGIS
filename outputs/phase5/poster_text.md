@@ -22,7 +22,7 @@
   1. *Permuted-MNIST (5 tasks):* Spatial pixel permutations of digit images (784 inputs, 10 classes).
   2. *Permuted-MNIST (10 tasks):* 10 sequential permutations testing long-horizon compounding degradation.
   3. *Split-MNIST (5 tasks, domain-incremental):* Disjoint digit pairs (0/1, 2/3, 4/5, 6/7, 8/9) sharing a single 2-way output head.
-- **Model:** 2-hidden-layer MLP ($784 \to 256 \to 256 \to C$, 269k parameters), plain SGD ($\eta = 0.01$).
+- **Model:** 2-hidden-layer MLP ($784 \to 256 \to 256 \to C$, 269k parameters), plain SGD ($\eta = 0.05$, batch 128, 3 epochs/task; fixed across methods).
 - **Fairness Protocol:**
   - Standard MNIST split into 55,000 train, 5,000 validation (held-out tuning), and 10,000 test.
   - Equal tuning budget ($\le 6$ configs per method on validation seeds 0–2).
@@ -44,9 +44,9 @@
 | **Gate: Conflict (original, $\beta=0.25$)** | $81.73 \pm 1.41$ | $-17.60 \pm 1.84$ | $41.92 \pm 1.71$ | $-58.83 \pm 1.95$ | $62.28 \pm 0.98$ | $-45.88 \pm 1.24$ |
 | **Gate: Magnitude (ablation, $\beta=1.0$)** | $91.43 \pm 0.86$ | $-4.39 \pm 1.01$ | $83.13 \pm 1.22$ | $-12.82 \pm 1.33$ | $61.90 \pm 0.36$ | $-45.83 \pm 0.51$ |
 | **Gate: Layer Cosine ($\beta=0.5/1.0$)** | $89.00 \pm 2.32$ | $-9.62 \pm 2.98$ | $78.80 \pm 0.97$ | $-20.15 \pm 1.15$ | $62.05 \pm 1.02$ | $-46.39 \pm 1.26$ |
-| **Gate: Drift (repaired, β=0.1)** | $91.89 \pm 1.03$ | $-5.82 \pm 1.39$ | $83.21 \pm 1.26$ | $-14.98 \pm 1.44$ | $62.62 \pm 1.03$ | $-45.61 \pm 1.27$ |
-| **Gate: Hybrid (repaired, β=0.1, γ=0.25)** | $90.98 \pm 0.90$ | $-6.64 \pm 1.20$ | $83.82 \pm 0.54$ | $-13.95 \pm 0.64$ | $62.78 \pm 0.56$ | $-45.11 \pm 0.71$ |
-| **Gate: Soft Conflict (β=0.1)** | $90.68 \pm 0.58$ | $-7.44 \pm 0.79$ | $80.05 \pm 1.66$ | $-18.58 \pm 1.86$ | $62.34 \pm 1.03$ | $-45.99 \pm 1.28$ |
+| **Gate: Drift (repaired, β=0.1, decay 0.9)** | $91.89 \pm 1.03$ | $-5.82 \pm 1.39$ | $83.21 \pm 1.26$ | $-14.98 \pm 1.44$ | $62.62 \pm 1.03$ | $-45.61 \pm 1.27$ |
+| **Gate: Hybrid (repaired, β=0.1, γ=0.5)** | $90.98 \pm 0.90$ | $-6.64 \pm 1.20$ | $83.82 \pm 0.54$ | $-13.95 \pm 0.64$ | $62.78 \pm 0.56$ | $-45.11 \pm 0.71$ |
+| **Gate: Soft Conflict (β=0.05, decay 0.9)** | $90.68 \pm 0.58$ | $-7.44 \pm 0.79$ | $80.05 \pm 1.66$ | $-18.58 \pm 1.86$ | $62.34 \pm 1.03$ | $-45.99 \pm 1.28$ |
 
 *\*LoRA requires an oracle task ID at test time to select task-specific adapters.*
 
@@ -62,7 +62,7 @@
    - Result: Outperforms fine-tuning on Perm10 ($83.13\%$ vs $78.21\%$) and cuts backward forgetting from $-20.80\%$ to $-12.82\%$.
 3. **Anti-Ratchet Repairs Beat Fine-Tuning by ~5 Points:**
    - Restricting updates that expand distance from task starting weights (`gate:drift`, which checks $g \cdot e < 0$) or applying hybrid magnitude damping (`gate:hybrid`) halts weight runaway.
-   - On Perm10, `gate:hybrid` achieves $83.82 \pm 0.54\%$ and `gate:drift` achieves $83.21 \pm 1.26\%$ ACC, statistically outperforming plain fine-tuning ($78.21 \pm 1.68\%$) by about 5 points ($+5.62\%$ and $+5.01\%$) without memory buffers.
+   - On Perm10, `gate:hybrid` achieves $83.82 \pm 0.54\%$ and `gate:drift` achieves $83.21 \pm 1.26\%$ ACC, outperforming plain fine-tuning ($78.21 \pm 1.68\%$) by about 5 points ($+5.62\%$ and $+5.01\%$) under the tie rule (non-overlapping intervals, paired differences positive on all 5 seeds), without memory buffers.
 4. **Honest Framing: Repaired EWC Outperforms Every Gate:**
    - Repaired EWC (Perm10 ACC $90.22 \pm 0.87\%$) outperforms every gate variant ($83.13–83.82\%$) by over 6.4 percentage points. The gate variants beat fine-tuning by about 5 points, but the gate does not compete with EWC.
 5. **The Output Head Bottleneck:**

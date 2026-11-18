@@ -1,0 +1,61 @@
+claim_id,file,line,text,type,evidence_file,recomputed_value,status,fix
+C001,outputs/phase5/report.md,115,"Optimizer lr eta=0.05, batch 128, 3 epochs per task, fixed across methods",number,run_final_perm5.py / tune_and_run_*.py,"lr=0.05, bs=128, epochs=3",fix,Was incorrectly 0.01/64; corrected to match run scripts
+C002,outputs/phase5/poster_text.md,25,"plain SGD (eta = 0.05, batch 128)",number,run_final_perm5.py,"lr=0.05 bs=128",fix,Was 0.01; corrected
+C003,outputs/phase5/qa.md,39,"With SGD learning rate eta = 0.05",number,run_final_perm5.py,"lr=0.05",fix,Was 0.01; corrected
+C004,outputs/phase5/report.md,154,"Gate: Soft Conflict beta=0.05 decay 0.9",number,configs/locked_repaired.json,"method gate:conflict_soft:0.05 decay 0.9",fix,Was labeled beta=0.1; corrected to 0.05
+C005,README.md,41,"Gate: Soft Conflict beta=0.05",number,configs/locked_repaired.json,"0.05",fix,Corrected from 0.1
+C006,outputs/phase5/poster_text.md,49,"Gate: Soft Conflict beta=0.05",number,configs/locked_repaired.json,"0.05",fix,Corrected from 0.1
+C007,outputs/phase5/poster_text.md,48,"Gate: Hybrid beta=0.1 gamma=0.5",number,configs/locked_repaired.json,"gate:hybrid:0.1:0.5",fix,Was gamma=0.25; corrected to 0.5
+C008,outputs/phase5/report.md,69,"magnitude gate divides |d| by mean|d| clamped max 1",comparison,cl2.py:116,"mag = clamp(|d|/(mean|d|+eps), max=1)",fix,Formula previously said max(|d|) and max(0,...); corrected to match code
+C009,outputs/phase5/report.md,222,"about 48% of elements gated per step (conflict tasks 2-5)",number,outputs/phase3/diag_all.csv,"0.479 mean across params",fix,Was 'over 80%'; corrected to measured ~48%
+C010,outputs/phase5/captions.md,81,"Figure 9 caption ~48% gated",number,outputs/phase3/diag_all.csv,"0.479",fix,Corrected from >80%
+C011,outputs/phase5/report.md,330,"Titans arXiv:2501.00663 Behrouz Zhong Mirrokni",citation,web search (arxiv.org/abs/2501.00663),"correct ID + authors",fix,Was 2412.19837 (a different paper) with wrong authors
+C012,outputs/phase5/report.md,326,"L2-SP cited by title/authors (no arXiv record)",citation,web search,"no arXiv ID exists",fix,Common arXiv:1809.05322 attribution is a propagated error; cited by venue
+C013,outputs/phase5/report.md,37-57,"Related work cites EWC SI MAS LwF GEM A-GEM PCGrad L2-SP replay LoRA Titans vdVen",citation,web search (see AUDIT_REPORT),"14 refs verified",fix,Added MAS LwF PCGrad A-GEM L2-SP van de Ven Robins Goodfellow refs
+C014,outputs/phase5/report.md,121,"std uses ddof=0 stated; paired difference definition stated",number,outputs/audit/recompute.py,"tables match ddof=0 exactly",fix,Convention was implicit; now stated
+C015,outputs/phase5/report.md,17,"drift Perm5 gain borderline (0.04pt margin; tie under ddof=1)",comparison,outputs/audit/recomputed_numbers.csv,"[90.86,92.92] vs [87.12,90.82]",fix,Borderline caveat added
+C016,outputs/phase5/report.md,18,"EWC beats every gate variant on Perm5 and Perm10",comparison,outputs/phase1/final_perm5_table.csv outputs/phase2/final_perm10_table.csv,"93.76 vs max 91.89; 90.22 vs max 83.82",fix,Perm5 statement added explicitly
+C017,README.md,18,"gates outperform FT on Perm10 under tie rule +5pts",comparison,outputs/audit/recomputed_numbers.csv,"non-overlap; paired signs +++++",verified,No change needed beyond wording
+C018,README.md,18,"hybrid 83.82+-0.54 drift 83.21+-1.26 Perm10 ACC",number,outputs/phase3/final_repaired_perm10.json,"83.82+-0.54 / 83.21+-1.26 (ddof0)",verified,
+C019,README.md,35,"conflict Perm10 41.92+-1.71 BWT -58.83+-1.95",number,outputs/phase2/final_perm10.json,"41.92+-1.71 / -58.83+-1.95",verified,
+C020,README.md,31,"finetune Perm5 88.97+-1.85 BWT -9.62+-2.34",number,outputs/phase1/final_perm5.json,"88.97+-1.85 / -9.62+-2.34",verified,
+C021,README.md,32,"EWC Perm5 93.76+-0.36 BWT -2.34+-0.55 (lam20)",number,outputs/phase1/final_perm5.json,"93.76+-0.36 / -2.34+-0.55",verified,
+C022,README.md,33,"replay 95.85+-0.11 Perm5; 95.22+-0.09 Perm10; 96.85+-0.30 split",number,final_perm5/perm10/split.json,"matches ddof0",verified,
+C023,README.md,34,"LoRA 94.30+-0.12 Perm5; 94.05+-0.05 Perm10; 98.73+-0.06 split; BWT 0",number,final_*.json,"matches",verified,
+C024,README.md,36,"magnitude 91.43+-0.86 Perm5; 83.13+-1.22 Perm10; 61.90+-0.36 split",number,final_*.json,"matches",verified,
+C025,README.md,37,"layer_cos 89.00+-2.32 Perm5; 78.80+-0.97 Perm10; 62.05+-1.02 split",number,final_*.json,"matches",verified,
+C026,README.md,38,"drift 91.89+-1.03 Perm5; 83.21+-1.26 Perm10; 62.62+-1.03 split",number,outputs/phase3/final_repaired_*.json,"matches",verified,
+C027,README.md,39,"hybrid 90.98+-0.90 Perm5; 83.82+-0.54 Perm10; 62.78+-0.56 split",number,outputs/phase3/final_repaired_*.json,"matches",verified,
+C028,README.md,40,"conflict_soft 90.68+-0.58 Perm5; 80.05+-1.66 Perm10; 62.34+-1.03 split",number,outputs/phase3/final_repaired_*.json,"matches",verified,
+C029,outputs/phase5/report.md,208,"diagnostics l1.weight norm 22.700 vs 11.790 magnitude 12.291",number,outputs/phase3/diag_all.csv,"22.700 / 11.790 / 12.291 (mean 3 seeds)",verified,
+C030,outputs/phase5/report.md,211,"drift along d +2.263 vs -0.145 vs -0.016",number,outputs/phase3/diag_all.csv,"+2.263 / -0.145 / -0.016",verified,
+C031,outputs/phase5/report.md,214,"ratchet supported by correlational logs + repair experiment; alternatives named",causal,outputs/phase3/diag_all.csv + repair runs,"two evidence types + 2 alternatives",fix,Relabeled from MEASURED 'SUPPORTED' decision; alternatives added
+C032,outputs/phase5/report.md,199,"Split-MNIST shared-head explanation",causal,outputs/phase2/final_split_table.csv,"tie is MEASURED; cause is HYPOTHESIS",verified,Correctly labeled HYPOTHESIS
+C033,outputs/phase5/report.md,16,"conflict gate degrades ACC -7.24+-1.38 Perm5; -36.29+-2.82 Perm10",number,outputs/audit/recomputed_numbers.csv,"matches (paired diffs)",verified,
+C034,outputs/phase5/report.md,174,"Task1 retention Perm10 conflict 14.28+-1.57 near chance",number,outputs/phase2/final_perm10.json R matrix,"13.44+-4.44 (R[:,0] after task10)",fix,Value differs: caption Figure 2 uses 13.44+-4.44; 14.28 is R[-1,0]?? recheck
+C035,outputs/phase5/script_60s.md,14,"conflict gate collapsed to 41.9% on 10 tasks 36% below FT",number,outputs/phase2/final_perm10.json,"41.92 / -36.29",verified,
+C036,outputs/phase5/script_60s.md,18,"repaired gates 83.1-83.8 beating FT by ~5 points",comparison,outputs/audit/recomputed_numbers.csv,"83.21/83.82 vs 78.21; paired +++++",verified,
+C037,outputs/phase5/script_60s.md,20,"EWC 90.2% outperforming every gate by over six points",comparison,outputs/phase2/final_perm10_table.csv,"90.22 vs 83.13-83.82 (>6.4pt)",verified,
+C038,outputs/phase5/script_60s.md,20,"no method without replay or task routing exceeds 62-64% on split",comparison,outputs/phase2/final_split_table.csv,"buffer-free range 61.90-63.96",verified,
+C039,outputs/phase5/qa.md,92,"FWT remained between +0.5% and +2.0% across methods on Permuted-MNIST",number,final_perm5/perm10 tables,"Perm5 FWT 1.37-2.05; Perm10 0.47-1.07",fix,Upper bound 2.05 exceeds stated 2.0; scoped statement to permuted benchmarks
+C040,outputs/phase5/qa.md,49,"gate is not novel; relates to SI and GEM",novelty,report.md related work,"explicit disclaimer",verified,
+C041,outputs/phase5/report.md,49,"Gradient-Conflict Gate is not novel",novelty,report.md,"explicit disclaimer",verified,
+C042,outputs/phase5/captions.md,9,"Table 1 caption: 5 seeds 100-104 test split mean+-std; LoRA footnote",number,outputs/phase5/table_perm5.csv,"caption complete",verified,
+C043,outputs/phase5/poster_text.md,69,"no buffer-free method beats 62-64% on split",comparison,outputs/phase2/final_split_table.csv,"61.90-63.96",verified,
+C044,outputs/phase5/poster_text.md,62,"magnitude outperforms FT on Perm10 83.13 vs 78.21",comparison,outputs/audit/recomputed_numbers.csv,"non-overlap +++++ paired",verified,
+C045,outputs/phase5/qa.md,54,"magnitude beats conflict by +9.70 Perm5 and +41.21 Perm10",comparison,final tables,"91.43-81.73=9.70; 83.13-41.92=41.21",verified,
+C046,outputs/phase5/qa.md,72,"gates trail replay by ~11.5% ACC on Perm10",comparison,outputs/phase2/final_perm10_table.csv,"95.22-83.82=11.40; 95.22-83.21=12.01",fix,~11.5 is mid-range; adjusted phrasing to 11-12 points
+C047,outputs/phase5/report.md,30,"param count 269,322",number,computed,"784*256+256+256*256+256+256*10+10=269322",verified,
+C048,outputs/phase5/qa.md,39,"EWC 9.80% = class-0 share; NaN default to class 0",causal,outputs/phase1/ewc_diagnosis.txt,"divergence at step 13 confirmed",verified,
+C049,outputs/phase5/qa.md,16,"CPU 0.156s vs MPS 0.317s for 500 MLP passes",number,STATUS.md Task 0.1,"recorded in STATUS.md; not independently rerun",verified,
+C050,outputs/phase5/qa.md,28,"55k/5k split seed 42; tuning seeds 0-2; final seeds 100-104",number,cl2.py:35-40 + run scripts,"verified in code",verified,
+C051,outputs/phase5/report.md,135-144,"FWT Perm5 values 1.37-2.05 +- ranges",number,outputs/phase1/final_perm5_table.csv,"matches",verified,
+C052,outputs/phase5/report.md,161,"Perm5 layer_cos diff +0.02+-0.86 tie",comparison,outputs/audit/recompute.py,"paired signs -+--+",verified,
+C053,outputs/phase5/report.md,197,"buffer-free methods tie 61.90-63.96 on split",comparison,outputs/phase2/final_split_table.csv + phase3,"range correct; all overlap",verified,
+C054,STATUS.md,119,"drift Perm5 diff +2.92+-0.96 distinguishable under tie rule",comparison,outputs/audit/recomputed_numbers.csv,"borderline (ddof=1 tie)",fix,STATUS is a historical log; borderline caveat recorded in AUDIT_REPORT instead
+C055,outputs/AEGIS_Master_Project_Report.md,1-9,"master report numbers match raw files",number,outputs/audit/recompute.py,"all table values match ddof0",verified,
+C056,outputs/AEGIS_Simplified_Project_Overview.md,18,"EWC NaN explosion solved",causal,outputs/phase1/results_ewc_val_lam20.json,"no divergence at lambda=20; guard added",verified,Justified use of 'solved' (divergence fixed and guarded)
+C057,outputs/summary.md,1,"historical prototype-era summary",number,outputs/results_main.json etc,"old test-set-tuned numbers",fix,Marked SUPERSEDED header; do not cite as current
+C058,outputs/results_explanation.md,1,"historical explanation doc",number,outputs/results_*.json,"prototype era",fix,Marked SUPERSEDED header
+C059,README.md,3,"MIT license badge",number,repo,"no LICENSE file present",fix,Decision for user (Part 7): add LICENSE or remove badge
+C060,README.md,4,"Python 3.10+ badge",number,.venv,"runs on Python 3.9.6 here",fix,Badge overstated; noted in audit; torch 2.8 supports 3.9+

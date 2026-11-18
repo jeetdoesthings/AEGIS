@@ -1,3 +1,5 @@
+> **[SUPERSEDED — AUDIT NOTE, Nov 2026]** This is a historical Phase-0-era document. It describes the prototype runs whose hyperparameters were tuned on the test set (a flaw later corrected) and whose numbers are superseded by `outputs/phase5/report.md` and `outputs/phase5/master_summary.csv`. Kept for the record; do not cite these numbers as current results.
+
 The gradient-conflict gate did not win the benchmark. Across all tested configurations, experience replay achieved the best final accuracy at 95.2 ± 0.2% ACC (main). LoRA demonstrated the least catastrophic forgetting, maintaining 0.0 ± 0.0% BWT. Plain fine-tuning achieved the best new-task learning at 97.5 ± 0.0% NEW (epochs5).
 
 Comparing gate variants, gate:conflict did not beat gate:magnitude; gate:magnitude:1.0 achieved 92.3 ± 0.6% ACC with -3.7 ± 0.6% BWT, severely outperforming gate:conflict:1.0 (13.7 ± 3.0% ACC, -56.9 ± 2.4% BWT).

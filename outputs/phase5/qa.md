@@ -36,7 +36,7 @@ A negative $BWT$ indicates forgetting. In plain fine-tuning, $BWT$ drops from $-
 ---
 
 ### Q6: Why did EWC originally fail with 9.8% accuracy, and how did you repair it?
-**Answer:** The initial codebase set EWC penalty $\lambda = 5000$. With SGD learning rate $\eta = 0.01$ and unnormalized Fisher diagonal values, the update term $\eta \lambda F_i \gg 1$. At step 13 of Task 2, gradient updates diverged exponentially into NaNs and Infinities. `torch.argmax` on NaN logits defaulted to class 0, producing exactly 9.80% accuracy (the class frequency of digit 0). We diagnosed this (`outputs/phase1/ewc_diagnosis.txt`), added an explicit divergence guard, and swept $\lambda \in \{1, 5, 20, 100\}$. On validation, $\lambda=20$ achieved optimal stability ($93.66 \pm 0.73\%$), and on test, repaired EWC achieved $93.76 \pm 0.36\%$ on Perm5 and $90.22 \pm 0.87\%$ on Perm10 without diverging.
+**Answer:** The initial codebase set EWC penalty $\lambda = 5000$. With SGD learning rate $\eta = 0.05$ and unnormalized Fisher diagonal values, the update term $\eta \lambda F_i \gg 1$. At step 13 of Task 2, gradient updates diverged exponentially into NaNs and Infinities. `torch.argmax` on NaN logits defaulted to class 0, producing exactly 9.80% accuracy (the class frequency of digit 0). We diagnosed this (`outputs/phase1/ewc_diagnosis.txt`), added an explicit divergence guard, and swept $\lambda \in \{1, 5, 20, 100\}$. On validation, $\lambda=20$ achieved optimal stability ($93.66 \pm 0.73\%$), and on test, repaired EWC achieved $93.76 \pm 0.36\%$ on Perm5 and $90.22 \pm 0.87\%$ on Perm10 without diverging.
 
 ---
 
@@ -60,8 +60,8 @@ A negative $BWT$ indicates forgetting. In plain fine-tuning, $BWT$ drops from $-
 **Answer:**
 - **Mechanism in Code (`cl2.py`)**: `gate:drift` is an anti-drift gradient gate, not an additive loss penalty. At each step, it computes $e = \theta - \theta_{start}$ and checks $\text{cond} = (g \cdot d > 0) \lor (g \cdot e < 0)$. If an update moves parameters further from the task starting anchor ($g \cdot e < 0$) or opposes historical displacement ($g \cdot d > 0$), it damps the gradient by $1 - \beta \cdot \text{mag} \cdot \text{cond}$. In the continual learning literature, penalizing movement away from starting weights is standardly done via additive quadratic loss penalties (L2-SP or EWC). Here, `gate:drift` enforces that anchor proximity directly in the gradient domain without an explicit loss penalty.
 - **Empirical Results vs Fine-Tuning & EWC**:
-  - On Perm5: `gate:drift` achieved $91.89 \pm 1.03\%$ ACC vs $88.97 \pm 1.85\%$ for fine-tuning. The intervals $[90.86, 92.92]$ and $[87.12, 90.82]$ do not overlap, so **`gate:drift` statistically outperforms fine-tuning by $+2.92 \pm 0.96\%$**.
-  - On Perm10: `gate:hybrid` achieved $83.82 \pm 0.54\%$ and `gate:drift` achieved $83.21 \pm 1.26\%$ ACC vs $78.21 \pm 1.68\%$ for fine-tuning, **statistically outperforming fine-tuning by about 5 points ($+5.62\%$ and $+5.01\%$)**.
+  - On Perm5: `gate:drift` achieved $91.89 \pm 1.03\%$ ACC vs $88.97 \pm 1.85\%$ for fine-tuning. The intervals $[90.86, 92.92]$ and $[87.12, 90.82]$ do not overlap, and paired differences are positive on all 5 seeds, so under the tie rule **`gate:drift` outperforms fine-tuning by $+2.92 \pm 0.96\%$** — a borderline result, since the margin is only 0.04 points (with the sample-std convention ddof=1 the intervals overlap and it is a tie).
+  - On Perm10: `gate:hybrid` achieved $83.82 \pm 0.54\%$ and `gate:drift` achieved $83.21 \pm 1.26\%$ ACC vs $78.21 \pm 1.68\%$ for fine-tuning, **outperforming fine-tuning by about 5 points ($+5.62\%$ and $+5.01\%$) under the tie rule (non-overlapping intervals, paired differences positive on all 5 seeds)**.
   - **Honest Framing vs EWC**: Repaired EWC achieves $90.22 \pm 0.87\%$ ACC, **outperforming every gate variant ($83.13–83.82\%$) by over 6.4 percentage points**. The gate variants do not compete with EWC on retention.
   - On Split-MNIST: **No method without replay or task ID beats $62–64\%$ ACC** (fine-tuning $62.07\%$, gates $61.90–62.78\%$, EWC $63.96\%$, forming a mutual statistical tie).
 
@@ -69,7 +69,7 @@ A negative $BWT$ indicates forgetting. In plain fine-tuning, $BWT$ drops from $-
 
 ### Q11: How do your repaired gates compare to Experience Replay?
 **Answer:** ⚠️ **Flagged: Results do NOT support claiming the gate beats replay.**  
-`[MEASURED]` Experience Replay (with 1,000 stored exemplars) outperformed all buffer-free gating methods on all three benchmarks: $95.85 \pm 0.11\%$ on Perm5, $95.22 \pm 0.09\%$ on Perm10, and $96.85 \pm 0.30\%$ on Split-MNIST. While `gate:drift` ($83.21\%$) and `gate:hybrid` ($83.82\%$) beat fine-tuning on Perm10, they trail replay by ~11.5% ACC. Replay directly re-anchors the loss surface using real historical data, which no buffer-free weight-space method in our study matched.
+`[MEASURED]` Experience Replay (with 1,000 stored exemplars) outperformed all buffer-free gating methods on all three benchmarks: $95.85 \pm 0.11\%$ on Perm5, $95.22 \pm 0.09\%$ on Perm10, and $96.85 \pm 0.30\%$ on Split-MNIST. While `gate:drift` ($83.21\%$) and `gate:hybrid` ($83.82\%$) beat fine-tuning on Perm10, they trail replay by 11–12 points ACC. Replay directly re-anchors the loss surface using real historical data, which no buffer-free weight-space method in our study matched.
 
 ---
 
@@ -89,7 +89,7 @@ A negative $BWT$ indicates forgetting. In plain fine-tuning, $BWT$ drops from $-
 ---
 
 ### Q14: Why is Forward Transfer (FWT) close to zero across all methods?
-**Answer:** `[MEASURED]` $FWT$ measures accuracy on task $j$ prior to training on it, compared to a randomly initialized network ($FWT = \frac{1}{T-1} \sum_{j=2}^T (R_{j-1, j} - R_{0, j})$). Across all methods on Permuted-MNIST, $FWT$ remained between $+0.5\%$ and $+2.0\%$.  
+**Answer:** `[MEASURED]` $FWT$ measures accuracy on task $j$ prior to training on it, compared to a randomly initialized network ($FWT = \frac{1}{T-1} \sum_{j=2}^T (R_{j-1, j} - R_{0, j})$). Across all methods on Permuted-MNIST, $FWT$ stayed within roughly $+0.5\%$ to $+2.1\%$ of the untrained reference (`final_perm5_table.csv`, `final_perm10_table.csv`) — near zero on the 78–96% accuracy scale.  
 `[HYPOTHESIS]` This is expected: each task applies an independent random pixel permutation that completely destroys spatial correlations. Learning permutation $A$ provides zero inductive prior or feature reusability for permutation $B$.
 
 ---

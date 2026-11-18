@@ -1,0 +1,29 @@
+{
+  "methods": [
+    "finetune"
+  ],
+  "tasks": 5,
+  "epochs": 3,
+  "lr": 0.05,
+  "bs": 128,
+  "seeds": 3,
+  "seed_start": 0,
+  "eval_split": "test",
+  "bench": "permmnist",
+  "out": "audit_regression",
+  "clip": 0.0,
+  "ewc_lambda": 5000,
+  "buf": 200,
+  "r": 8,
+  "beta": 1.0,
+  "gamma": 0.25,
+  "decay": 1.0,
+  "git_commit": "2f64f8156756bf167d4e252e686b3e3b2a39ffa4",
+  "torch_version": "2.8.0",
+  "device": "cpu",
+  "seeds_evaluated": [
+    0,
+    1,
+    2
+  ]
+}
